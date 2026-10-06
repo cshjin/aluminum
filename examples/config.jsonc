@@ -1,0 +1,52 @@
+// Example — copy to ~/.config/llm-rosetta-gateway/config.jsonc via `alum setup`.
+{
+    "providers": {
+        "argo": {
+            "type": "openai_chat",
+            "base_url": "http://127.0.0.1:11444/v1",
+            "api_key": "dummy"
+        },
+        "alcf": {
+            "type": "openai_chat",
+            "base_url": "http://127.0.0.1:11445/v1",
+            "api_key": "dummy"
+        },
+        "AskSage": {
+            "type": "openai_chat",
+            "base_url": "http://127.0.0.1:11446/v1",
+            "api_key": "dummy"
+        },
+        "ollama": {
+            "type": "openai_chat",
+            "base_url": "http://127.0.0.1:11434/v1",
+            "api_key": "dummy"
+        }
+    },
+    "models": {
+        "argo:claude-opus-5": {
+            "provider": "argo",
+            "upstream_model": "argo:claude-opus-5",
+            "capabilities": ["text", "tools", "vision", "reasoning"]
+        },
+        "alcf:gpt-oss-120b": {
+            "provider": "alcf",
+            "upstream_model": "gpt-oss-120b",
+            "capabilities": ["text", "tools", "vision", "reasoning"]
+        },
+        "asksage:gpt-5.6-luna": {
+            "provider": "AskSage",
+            "upstream_model": "gpt-5.6-luna",
+            "capabilities": ["text", "tools", "vision", "reasoning"]
+        },
+        "ollama:gpt-oss-120b-cloud": {
+            "provider": "ollama",
+            "upstream_model": "gpt-oss:120b-cloud",
+            "capabilities": ["text", "tools", "vision", "reasoning"]
+        }
+    },
+    "server": {
+        "host": "127.0.0.1",
+        "port": 46701,
+        "open_on_no_keys": true
+    }
+}

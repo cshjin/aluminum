@@ -1,0 +1,46 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "alum"
+version = "0.1.0"
+description = "ALUM (An LLM Unified Mesh) — one-command aggregator over Argo, ALCF, AskSage and Ollama via llm-rosetta-gateway"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "ALUM contributors" }]
+keywords = ["llm", "gateway", "argo", "alcf", "asksage", "ollama", "llm-rosetta"]
+dependencies = [
+  "click>=8.0",
+  "httpx>=0.27",
+  "pyyaml>=6.0",
+  "platformdirs>=4.0",
+  "rich>=13.0",
+  "inquirerpy>=0.3",
+  "llm-rosetta[gateway]>=0.10",
+]
+
+[project.optional-dependencies]
+# Upstream proxies are optional — alum works with whichever are installed.
+argo = ["argo-proxy>=3.0"]
+alcf = ["alcf-proxy>=0.2"]
+asksage = ["asksage-proxy>=0.2"]
+all = ["alum[argo,alcf,asksage]"]
+docs = ["mkdocs>=1.6", "mkdocs-material>=9.0"]
+dev = ["pytest>=8.0", "ruff>=0.5"]
+
+[project.scripts]
+alum = "alum.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/cshjin/aluminum"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 100
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

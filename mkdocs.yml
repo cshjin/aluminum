@@ -1,0 +1,25 @@
+site_name: ALUM — An LLM Unified Mesh
+site_description: One-command aggregator over Argo, ALCF, AskSage and Ollama via llm-rosetta-gateway.
+site_url: https://cshjin.github.io/aluminum/
+repo_url: https://github.com/cshjin/aluminum
+
+theme:
+  name: material
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - content.code.copy
+
+nav:
+  - Home: index.md
+  - Quickstart: quickstart.md
+  - Architecture: architecture.md
+  - Backends: backends.md
+  - CLI Reference: cli.md
+  - Operations: operations.md
+  - FAQ: faq.md
+
+markdown_extensions:
+  - admonition
+  - codehilite
+  - pymdownx.superfences
