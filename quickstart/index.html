@@ -765,9 +765,11 @@ mkdocs<span class="w"> </span>serve
 <div class="highlight"><pre><span></span><code>alum<span class="w"> </span>doctor
 </code></pre></div>
 <p>Expected: one row per backend (<code>argo</code>, <code>alcf</code>, <code>asksage</code>, <code>ollama</code>) plus the
-mesh gateway on <code>127.0.0.1:46701</code>. Missing rows simply mean that proxy is not
-running — the wizard will only offer what it can reach (plus curated
-fallbacks).</p>
+mesh gateway on <code>127.0.0.1:46701</code>. Tell ALUM where your proxies live via
+flags (<code>--argo-port …</code>), env vars (<code>ALUM_ARGO_PORT</code> … — see Architecture),
+or the setup prompts. ❌ rows simply mean that proxy is not
+running (or the port is wrong) — the wizard still offers curated
+fallbacks.</p>
 <h2 id="3-run-the-wizard">3. Run the wizard</h2>
 <div class="highlight"><pre><span></span><code>alum<span class="w"> </span>setup
 </code></pre></div>
@@ -775,7 +777,8 @@ fallbacks).</p>
 <ol>
 <li><strong>Port</strong> — mesh gateway port (default <code>46701</code>); warns if occupied.</li>
 <li><strong>Pick services</strong> — checkbox-style numbered list; nothing pre-selected.</li>
-<li><strong>Pick models per service</strong> — fetched live from each <code>/v1/models</code>
+<li><strong>Proxy ports + models</strong> — one port prompt per selected service, then
+   model checkboxes fetched live from each <code>/v1/models</code>
    (Ollama via <code>/api/tags</code>); curated fallbacks apply when a backend is down.</li>
 <li><strong>Confirm</strong> — writes <code>~/.config/llm-rosetta-gateway/config.jsonc</code>
    (previous file is backed up to <code>.jsonc.bak</code>).</li>

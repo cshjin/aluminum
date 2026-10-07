@@ -509,10 +509,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#argo-argo-proxy-11444" class="md-nav__link">
+  <a href="#argo-argo-proxy" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Argo (argo-proxy, :11444)
+        Argo (argo-proxy)
       
     </span>
   </a>
@@ -520,10 +520,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#alcf-alcf-proxy-11445" class="md-nav__link">
+  <a href="#alcf-alcf-proxy" class="md-nav__link">
     <span class="md-ellipsis">
       
-        ALCF (alcf-proxy, :11445)
+        ALCF (alcf-proxy)
       
     </span>
   </a>
@@ -531,10 +531,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#asksage-asksage-proxy-11446" class="md-nav__link">
+  <a href="#asksage-asksage-proxy" class="md-nav__link">
     <span class="md-ellipsis">
       
-        AskSage (asksage-proxy, :11446)
+        AskSage (asksage-proxy)
       
     </span>
   </a>
@@ -542,10 +542,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#ollama-11434" class="md-nav__link">
+  <a href="#ollama" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Ollama (:11434)
+        Ollama
       
     </span>
   </a>
@@ -679,10 +679,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#argo-argo-proxy-11444" class="md-nav__link">
+  <a href="#argo-argo-proxy" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Argo (argo-proxy, :11444)
+        Argo (argo-proxy)
       
     </span>
   </a>
@@ -690,10 +690,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#alcf-alcf-proxy-11445" class="md-nav__link">
+  <a href="#alcf-alcf-proxy" class="md-nav__link">
     <span class="md-ellipsis">
       
-        ALCF (alcf-proxy, :11445)
+        ALCF (alcf-proxy)
       
     </span>
   </a>
@@ -701,10 +701,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#asksage-asksage-proxy-11446" class="md-nav__link">
+  <a href="#asksage-asksage-proxy" class="md-nav__link">
     <span class="md-ellipsis">
       
-        AskSage (asksage-proxy, :11446)
+        AskSage (asksage-proxy)
       
     </span>
   </a>
@@ -712,10 +712,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#ollama-11434" class="md-nav__link">
+  <a href="#ollama" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Ollama (:11434)
+        Ollama
       
     </span>
   </a>
@@ -768,25 +768,25 @@ through the local proxy. Fallback order per backend:</p>
 <tbody>
 <tr>
 <td>Argo</td>
-<td><code>:11444/v1/models</code></td>
+<td><code>:8101/v1/models</code></td>
 <td>prod <code>https://apps.inside.anl.gov/argoapi/v1/models</code> (public, no auth)</td>
 <td>✅</td>
 </tr>
 <tr>
 <td>ALCF</td>
-<td><code>:11445/v1/models</code></td>
+<td><code>:8102/v1/models</code></td>
 <td><code>alcf-proxy models --json</code> (owns Globus auth; see <a href="https://docs.alcf.anl.gov/services/inference-endpoints">inference-endpoints docs</a>)</td>
 <td>✅</td>
 </tr>
 <tr>
 <td>AskSage</td>
-<td><code>:11446/v1/models</code></td>
+<td><code>:8103/v1/models</code></td>
 <td>cached <code>~/.config/asksage_proxy/available_models.json</code> (<a href="https://docs.asksage.ai/api-documentation/">API docs</a>)</td>
 <td>✅</td>
 </tr>
 <tr>
 <td>Ollama</td>
-<td><code>:11434/api/tags</code></td>
+<td><code>:8104/api/tags</code></td>
 <td>auto-start <code>ollama serve</code> if down, then re-check</td>
 <td>✅</td>
 </tr>
@@ -801,7 +801,7 @@ local dev proxy serves routable ids (<code>argo:claude-opus-5</code>) — zero o
 down. If you switch <code>argo-proxy</code> to the prod environment, re-run
 <code>alum setup</code> to pick up the new ids.</p>
 </div>
-<h2 id="argo-argo-proxy-11444">Argo (<code>argo-proxy</code>, :11444)</h2>
+<h2 id="argo-argo-proxy">Argo (<code>argo-proxy</code>)</h2>
 <ul>
 <li>Single gateway provider block <code>argo</code> (<code>openai_chat</code> → <code>/v1</code>). argo-proxy
   natively serves both <code>/v1/chat/completions</code> and <code>/v1/messages</code>, so one
@@ -811,13 +811,13 @@ down. If you switch <code>argo-proxy</code> to the prod environment, re-run
 <li>Serve hint: <code>argo-proxy serve</code>. Config lives at
   <code>~/.config/argoproxy/config.yaml</code>.</li>
 </ul>
-<h2 id="alcf-alcf-proxy-11445">ALCF (<code>alcf-proxy</code>, :11445)</h2>
+<h2 id="alcf-alcf-proxy">ALCF (<code>alcf-proxy</code>)</h2>
 <ul>
 <li>Single <code>openai_chat</code> provider block pointed at <code>/v1</code>.</li>
 <li>Model list comes from the cluster scheduler (Sophia/Metis/Minerva, vLLM).</li>
 <li>Serve hint: <code>alcf-proxy serve</code>.</li>
 </ul>
-<h2 id="asksage-asksage-proxy-11446">AskSage (<code>asksage-proxy</code>, :11446)</h2>
+<h2 id="asksage-asksage-proxy">AskSage (<code>asksage-proxy</code>)</h2>
 <ul>
 <li>Single <code>openai_chat</code> provider block (<code>AskSage</code>).</li>
 <li>Requires a personal API key and the ANL cert (<code>asksage_anl_gov.pem</code>).
@@ -825,7 +825,7 @@ down. If you switch <code>argo-proxy</code> to the prod environment, re-run
   plus model routing (auth lives in each proxy's own config).</li>
 <li>Serve hint: <code>asksage-proxy</code>. Config at <code>~/.config/asksage_proxy/config.yaml</code>.</li>
 </ul>
-<h2 id="ollama-11434">Ollama (:11434)</h2>
+<h2 id="ollama">Ollama</h2>
 <ul>
 <li>Local daemon; also serves Ollama <strong>cloud</strong> models (<code>*:cloud</code>) after
   <code>ollama signin</code>. Cloud entries appear with size <code>-</code> in <code>ollama list</code>.</li>

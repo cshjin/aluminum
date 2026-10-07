@@ -733,22 +733,26 @@
 
 <h1 id="cli-reference">CLI Reference</h1>
 <div class="highlight"><pre><span></span><code>alum --help
-alum doctor [--timeout 5.0]
-alum setup [-c CONFIG] [--host 127.0.0.1] [--port 46701] [--yes]
-alum serve [-c CONFIG] [--host 127.0.0.1] [--port 46701]
+alum doctor [--timeout 5.0] [--argo-port N] [--alcf-port N] [--asksage-port N] [--ollama-port N]
+alum setup [-c CONFIG] [--host 127.0.0.1] [--port 46701] [--argo-port N] [--alcf-port N] [--asksage-port N] [--ollama-port N] [--yes] [--no-banner]
+alum serve [-c CONFIG] [--host 127.0.0.1] [--port 46701] [--no-banner]
 alum status [--host 127.0.0.1] [--port 46701]
 alum models [--host 127.0.0.1] [--port 46701] [--json]
 alum show [-c CONFIG]
 alum version
 </code></pre></div>
+<p>Backend ports resolve as: CLI flag &gt; <code>ALUM_ARGO_PORT</code> / <code>ALUM_ALCF_PORT</code> /
+<code>ALUM_ASKSAGE_PORT</code> / <code>ALUM_OLLAMA_PORT</code> env vars &gt; built-in placeholders
+(8101–8104). The mesh port resolves as: <code>--port</code> &gt; <code>ALUM_PORT</code> &gt; 46701.</p>
 <h2 id="doctor">doctor</h2>
 <p>Probe every registered backend plus the mesh gateway. Exit code is always 0;
 read the ✅/❌ table.</p>
 <h2 id="setup">setup</h2>
-<p>Interactive wizard (three steps: services → models → confirm). Service and
+<p>Interactive wizard (four steps: port → services → models → confirm). Service and
 model steps use arrow-key checkboxes: <strong>↑↓</strong> to move, <strong>space</strong> to
 toggle, <strong>enter</strong> to submit. Nothing is pre-selected — submit empty to abort.
-The final step asks for confirmation before overwriting. Writes
+Each selected backend prompts for its local proxy port (flag/env/placeholder
+default). The final step asks for confirmation before overwriting. Writes
 <code>~/.config/llm-rosetta-gateway/config.jsonc</code> with a <code>.jsonc.bak</code> backup.
 <code>--yes</code> skips prompts using live backends + curated models. When stdin is
 not a TTY (pipes, CI), selection falls back to numbered input.</p>

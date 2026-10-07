@@ -710,10 +710,10 @@
 
 
 <h1 id="architecture">Architecture</h1>
-<div class="highlight"><pre><span></span><code>Argo :11444 ─┐
-ALCF :11445 ─┼─► llm-rosetta-gateway :46701 ─► agents / SDKs / Claude Code
-AskSage :11446┤   (OpenAI + Anthropic compat, llm-rosetta IR)
-Ollama :11434┘
+<div class="highlight"><pre><span></span><code>Argo :8101 ─┐
+ALCF :8102 ─┼─► llm-rosetta-gateway :46701 ─► agents / SDKs / Claude Code
+AskSage :8103┤   (OpenAI + Anthropic compat, llm-rosetta IR)
+Ollama :8104┘
 </code></pre></div>
 <h2 id="why-an-orchestration-layer">Why an orchestration layer?</h2>
 <p>Each upstream already ships its own proxy (<code>argo-proxy</code>, <code>alcf-proxy</code>,
@@ -735,7 +735,7 @@ Ollama :11434┘
 <tbody>
 <tr>
 <td><code>alum.backends</code></td>
-<td>backend registry, default ports, curated fallbacks, mesh naming</td>
+<td>backend registry, curated fallbacks, mesh naming</td>
 </tr>
 <tr>
 <td><code>alum.detect</code></td>
@@ -744,6 +744,10 @@ Ollama :11434┘
 <tr>
 <td><code>alum.gateway</code></td>
 <td><code>config.jsonc</code> builder, writer, launcher</td>
+</tr>
+<tr>
+<td><code>alum.ports</code></td>
+<td>port resolution (explicit flag &gt; <code>ALUM_*_PORT</code> env &gt; placeholder)</td>
 </tr>
 <tr>
 <td><code>alum.config</code></td>
@@ -756,33 +760,43 @@ Ollama :11434┘
 </tbody>
 </table>
 <h2 id="port-conventions">Port conventions</h2>
+<p>Backend defaults are <strong>placeholders, not real ports</strong> — set yours via
+<code>alum setup</code> prompts, <code>--argo-port/--alcf-port/--asksage-port/--ollama-port</code>
+flags, or <code>ALUM_ARGO_PORT</code> / <code>ALUM_ALCF_PORT</code> / <code>ALUM_ASKSAGE_PORT</code> /
+<code>ALUM_OLLAMA_PORT</code> env vars.</p>
 <table>
 <thead>
 <tr>
 <th>Service</th>
-<th>Default</th>
+<th>Placeholder</th>
+<th>Env var</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td>Ollama</td>
-<td>11434</td>
+<td>8104</td>
+<td><code>ALUM_OLLAMA_PORT</code></td>
 </tr>
 <tr>
 <td>Argo proxy</td>
-<td>11444</td>
+<td>8101</td>
+<td><code>ALUM_ARGO_PORT</code></td>
 </tr>
 <tr>
 <td>ALCF proxy</td>
-<td>11445</td>
+<td>8102</td>
+<td><code>ALUM_ALCF_PORT</code></td>
 </tr>
 <tr>
 <td>AskSage proxy</td>
-<td>11446</td>
+<td>8103</td>
+<td><code>ALUM_ASKSAGE_PORT</code></td>
 </tr>
 <tr>
 <td><strong>ALUM mesh</strong></td>
 <td><strong>46701</strong></td>
+<td><code>ALUM_PORT</code> / <code>--port</code></td>
 </tr>
 </tbody>
 </table>
