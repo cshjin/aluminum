@@ -1,5 +1,9 @@
 # ALUM — An LLM Unified Mesh
 
+<p align="center">
+  <img src="docs/assets/alum-logo.svg" alt="ALUM logo" width="480">
+</p>
+
 One-command aggregator that unifies **Argo**, **ALCF**, **AskSage** and local
 **Ollama** behind a single OpenAI-compatible endpoint, using
 [`llm-rosetta-gateway`](https://github.com/Oaklight/llm-rosetta) as the

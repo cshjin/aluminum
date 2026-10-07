@@ -1,5 +1,9 @@
 # ALUM — An LLM Unified Mesh
 
+<p align="center">
+  <img src="assets/alum-logo.svg" alt="ALUM logo" width="480">
+</p>
+
 ALUM aggregates **Argo**, **ALCF**, **AskSage**, and local **Ollama**
 (including Ollama cloud models) behind one OpenAI-compatible endpoint.
 
