@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="240" viewBox="0 0 640 240">
+  <rect width="640" height="240" rx="28" fill="#0d1117"/>
+  <rect x="1.5" y="1.5" width="637" height="237" rx="26.5" fill="none" stroke="#30363d" stroke-width="3"/>
+  <text x="320" y="148" text-anchor="middle" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="104" font-weight="bold" letter-spacing="10"><tspan fill="#22d3ee">A</tspan><tspan fill="#4ade80">L</tspan><tspan fill="#facc15">U</tspan><tspan fill="#e879f9">M</tspan></text>
+  <text x="320" y="196" text-anchor="middle" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="24" letter-spacing="8" fill="#8b949e">AN LLM UNIFIED MESH</text>
+</svg>
