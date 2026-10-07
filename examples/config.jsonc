@@ -3,22 +3,22 @@
     "providers": {
         "argo": {
             "type": "openai_chat",
-            "base_url": "http://127.0.0.1:11444/v1",
+            "base_url": "http://127.0.0.1:8101/v1",
             "api_key": "dummy"
         },
         "alcf": {
             "type": "openai_chat",
-            "base_url": "http://127.0.0.1:11445/v1",
+            "base_url": "http://127.0.0.1:8102/v1",
             "api_key": "dummy"
         },
         "AskSage": {
             "type": "openai_chat",
-            "base_url": "http://127.0.0.1:11446/v1",
+            "base_url": "http://127.0.0.1:8103/v1",
             "api_key": "dummy"
         },
         "ollama": {
             "type": "openai_chat",
-            "base_url": "http://127.0.0.1:11434/v1",
+            "base_url": "http://127.0.0.1:8104/v1",
             "api_key": "dummy"
         }
     },

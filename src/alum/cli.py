@@ -11,7 +11,7 @@ from rich.console import Console
 from rich.table import Table
 
 from alum import __version__
-from alum.backends import CURATED_MODELS, GATEWAY_DEFAULT_PORT, REGISTRY, mesh_name
+from alum.backends import CURATED_MODELS, REGISTRY, mesh_name
 from alum.banner import print_banner
 from alum.config import mesh_base_url
 from alum.detect import (
@@ -28,6 +28,7 @@ from alum.gateway import (
     launch_gateway,
     write_config,
 )
+from alum.ports import GATEWAY_DEFAULT_PORT, resolve, resolve_all
 
 console = Console()
 
@@ -51,27 +52,46 @@ def cli() -> None:
     """ALUM — An LLM Unified Mesh (one-command LLM aggregator)."""
 
 
+def _backend_port_options(fn):
+    """Shared --argo-port/--alcf-port/--asksage-port/--ollama-port options."""
+    for key in ("argo", "alcf", "asksage", "ollama"):
+        fn = click.option(
+            f"--{key}-port",
+            default=None,
+            type=int,
+            help=f"{REGISTRY[key].label} proxy port (env ALUM_{key.upper()}_PORT).",
+        )(fn)
+    return fn
+
+
 @cli.command()
 @click.option("--timeout", default=5.0, help="Probe timeout in seconds.")
-def doctor(timeout: float) -> None:
+@_backend_port_options
+def doctor(
+    timeout: float,
+    argo_port: int | None,
+    alcf_port: int | None,
+    asksage_port: int | None,
+    ollama_port: int | None,
+) -> None:
     """Probe local backends and the mesh gateway."""
+    ports = {"argo": argo_port, "alcf": alcf_port, "asksage": asksage_port, "ollama": ollama_port}
     table = Table(title="ALUM doctor")
     table.add_column("backend")
     table.add_column("endpoint")
     table.add_column("status")
     table.add_column("detail")
-    for row in probe_all(timeout=timeout):
-        backend = REGISTRY[row["key"]]
+    for row in probe_all(ports=ports, timeout=timeout):
         table.add_row(
             row["label"],
-            f"127.0.0.1:{backend.default_port}",
+            f"127.0.0.1:{row['port']}",
             "✅ up" if row["alive"] else "❌ down",
             row["detail"],
         )
     gw = probe_gateway(timeout=timeout)
     table.add_row(
         "mesh gateway",
-        f"127.0.0.1:{GATEWAY_DEFAULT_PORT}",
+        f"127.0.0.1:{resolve('gateway')}",
         "✅ up" if gw["alive"] else "❌ down",
         gw["detail"],
     )
@@ -141,8 +161,8 @@ def _confirm(prompt_text: str, default: bool = True) -> bool:
     return bool(click.confirm(prompt_text, default=default))
 
 
-def _pick_models(provider_key: str, limit: int = 40) -> dict[str, str]:
-    upstream = fetch_upstream_models(provider_key)
+def _pick_models(provider_key: str, port: int, limit: int = 40) -> dict[str, str]:
+    upstream = fetch_upstream_models(provider_key, port=port)
     if provider_key == "ollama":
         # Ollama cloud tags are verbose; keep the list manageable.
         upstream = upstream[:limit]
@@ -157,28 +177,64 @@ def _pick_models(provider_key: str, limit: int = 40) -> dict[str, str]:
     return out
 
 
+def _pick_backend_ports(
+    provider_keys: list[str], cli_ports: dict[str, int | None], yes: bool
+) -> dict[str, int]:
+    """Resolve one local proxy port per selected backend (prompted when interactive)."""
+    ports: dict[str, int] = {}
+    for key in provider_keys:
+        if yes or cli_ports.get(key) is not None:
+            ports[key] = resolve(key, cli_ports.get(key))
+            continue
+        default = resolve(key)
+        ports[key] = click.prompt(
+            f"{REGISTRY[key].label} proxy port",
+            default=default,
+            type=click.IntRange(1, 65535),
+        )
+    return ports
+
+
 @cli.command()
 @click.option(
     "--config", "-c", default=None, help="Gateway config path (default: auto-discovered)."
 )
 @click.option("--host", default="127.0.0.1", help="Gateway bind host.")
 @click.option("--port", default=None, type=int, help="Gateway bind port.")
+@_backend_port_options
 @click.option(
     "--yes", "-y", is_flag=True, help="Non-interactive: use live backends + curated models."
 )
 @click.option("--no-banner", is_flag=True, help="Suppress the startup banner.")
-def setup(config: str | None, host: str, port: int | None, yes: bool, no_banner: bool) -> None:
+def setup(
+    config: str | None,
+    host: str,
+    port: int | None,
+    argo_port: int | None,
+    alcf_port: int | None,
+    asksage_port: int | None,
+    ollama_port: int | None,
+    yes: bool,
+    no_banner: bool,
+) -> None:
     """Interactive wizard: choose services, choose models, write gateway config."""
     if not no_banner:
         print_banner()
     console.print("[bold]Step 1/4 — mesh gateway port[/bold]")
     port = _pick_port(port, yes)
-    alive = {r["key"]: r["alive"] for r in probe_all()}
+    cli_ports = {
+        "argo": argo_port,
+        "alcf": alcf_port,
+        "asksage": asksage_port,
+        "ollama": ollama_port,
+    }
+    alive = {r["key"]: r["alive"] for r in probe_all(ports=cli_ports)}
     backend_keys = list(REGISTRY)
 
     if yes:
         provider_keys = [k for k in backend_keys if alive.get(k)] or list(backend_keys)
         models = default_models_for(provider_keys)
+        backend_ports = resolve_all(cli_ports)
     else:
         console.print("\n[bold]Step 2/4 — pick services to join the mesh[/bold]")
         for k in backend_keys:
@@ -191,18 +247,19 @@ def setup(config: str | None, host: str, port: int | None, yes: bool, no_banner:
             return
         if "ollama" in provider_keys and not alive.get("ollama"):
             console.print("Ollama selected but not serving — starting `ollama serve` …")
-            if ensure_ollama():
+            if ensure_ollama(port=ollama_port):
                 console.print("✅ Ollama is up.")
                 alive["ollama"] = True
             else:
                 console.print(
                     "[yellow]Could not start Ollama; its models come from fallback.[/yellow]"
                 )
+        backend_ports = _pick_backend_ports(provider_keys, cli_ports, yes)
         console.print("\n[bold]Step 3/4 — pick models per service[/bold]")
         models: dict[str, str] = {}
         kept: list[str] = []
         for key in provider_keys:
-            picked = _pick_models(key)
+            picked = _pick_models(key, backend_ports[key])
             if not picked:
                 console.print(f"[dim]Skipped {key}: no models selected.[/dim]")
                 continue
@@ -219,7 +276,7 @@ def setup(config: str | None, host: str, port: int | None, yes: bool, no_banner:
             console.print("Aborted — nothing written.")
             return
 
-    cfg = build_config(provider_keys, models, host=host, port=port)
+    cfg = build_config(provider_keys, models, host=host, port=port, backend_ports=backend_ports)
     path = config_path(config)
     write_config(cfg, path)
     console.print(f"\n✅ Wrote gateway config to [bold]{path}[/bold]")

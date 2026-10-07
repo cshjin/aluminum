@@ -3,7 +3,7 @@
 One-command aggregator that unifies **Argo**, **ALCF**, **AskSage** and local
 **Ollama** behind a single OpenAI-compatible endpoint, using
 [`llm-rosetta-gateway`](https://github.com/Oaklight/llm-rosetta) as the
-translation mesh (port **46701**, commemorating ANL's birthday on 1 July 1946).
+translation mesh (default port **46701**).
 
 ALUM is a **configuration & orchestration layer**: it does not re-implement the
 gateway. It detects which upstream services are alive on this machine, lets you
@@ -13,7 +13,7 @@ pick services + models in the terminal, generates `config.jsonc` for
 ```
 ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐
 │   Argo   │  │   ALCF   │  │ AskSage  │  │  Ollama  │
-│  :11444  │  │  :11445  │  │  :11446  │  │  :11434  │
+│  :8101  │  │  :8102  │  │  :8103  │  │  :8104  │
 └────┬─────┘  └────┬─────┘  └────┬─────┘  └────┬─────┘
      └─────────────┴────────────┴────────────┘
                           │

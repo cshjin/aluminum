@@ -65,9 +65,10 @@ def _colored() -> str:
 def print_banner() -> None:
     """Print the startup banner with version info."""
     from alum import __version__
+    from alum.ports import GATEWAY_DEFAULT_PORT
 
     use_color = sys.stdout.isatty() and "NO_COLOR" not in os.environ
     print(_colored() if use_color else BANNER)
     print(f"  ALUM — An LLM Unified Mesh  v{__version__}")
-    print("  mesh default: http://127.0.0.1:46701/v1")
+    print(f"  mesh default: http://127.0.0.1:{GATEWAY_DEFAULT_PORT}/v1")
     print()

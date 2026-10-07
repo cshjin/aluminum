@@ -20,9 +20,11 @@ alum doctor
 ```
 
 Expected: one row per backend (`argo`, `alcf`, `asksage`, `ollama`) plus the
-mesh gateway on `127.0.0.1:46701`. Missing rows simply mean that proxy is not
-running — the wizard will only offer what it can reach (plus curated
-fallbacks).
+mesh gateway on `127.0.0.1:46701`. Tell ALUM where your proxies live via
+flags (`--argo-port …`), env vars (`ALUM_ARGO_PORT` … — see Architecture),
+or the setup prompts. ❌ rows simply mean that proxy is not
+running (or the port is wrong) — the wizard still offers curated
+fallbacks.
 
 ## 3. Run the wizard
 
@@ -34,9 +36,10 @@ Four steps:
 
 1. **Port** — mesh gateway port (default `46701`); warns if occupied.
 2. **Pick services** — checkbox-style numbered list; nothing pre-selected.
-2. **Pick models per service** — fetched live from each `/v1/models`
+3. **Proxy ports + models** — one port prompt per selected service, then
+   model checkboxes fetched live from each `/v1/models`
    (Ollama via `/api/tags`); curated fallbacks apply when a backend is down.
-3. **Confirm** — writes `~/.config/llm-rosetta-gateway/config.jsonc`
+4. **Confirm** — writes `~/.config/llm-rosetta-gateway/config.jsonc`
    (previous file is backed up to `.jsonc.bak`).
 
 Non-interactive equivalent (CI / containers):

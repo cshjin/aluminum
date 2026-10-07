@@ -13,15 +13,13 @@ import httpx
 from platformdirs import user_config_dir
 
 from alum.backends import REGISTRY
+from alum.ports import resolve
 
 TIMEOUT = 5.0
 
 
-def probe_port(port: int, path: str = "/v1/models", timeout: float = TIMEOUT) -> tuple[bool, str]:
-    """Return (alive, detail) for a local HTTP endpoint."""
-    from alum.config import mesh_base_url
-
-    url = mesh_base_url(port=port) + path if port == 46701 else f"http://127.0.0.1:{port}{path}"
+def probe_url(url: str, timeout: float = TIMEOUT) -> tuple[bool, str]:
+    """Return (alive, detail) for an HTTP endpoint."""
     try:
         r = httpx.get(url, timeout=timeout)
         if r.status_code < 500:
@@ -31,21 +29,33 @@ def probe_port(port: int, path: str = "/v1/models", timeout: float = TIMEOUT) ->
         return False, f"{type(e).__name__}: {e}"
 
 
-def probe_backend(key: str, timeout: float = TIMEOUT) -> dict:
+def probe_port(port: int, path: str = "/v1/models", timeout: float = TIMEOUT) -> tuple[bool, str]:
+    """Return (alive, detail) for a local HTTP endpoint."""
+    return probe_url(f"http://127.0.0.1:{port}{path}", timeout=timeout)
+
+
+def probe_backend(key: str, port: int | None = None, timeout: float = TIMEOUT) -> dict:
     backend = REGISTRY[key]
-    if key == "ollama":
-        alive, detail = probe_port(backend.default_port, path="/api/tags", timeout=timeout)
-    else:
-        alive, detail = probe_port(backend.default_port, path="/v1/models", timeout=timeout)
-    return {"key": key, "label": backend.label, "alive": alive, "detail": detail}
+    port = resolve(key, port)
+    alive, detail = probe_url(backend.models_url(port), timeout=timeout)
+    return {"key": key, "label": backend.label, "port": port, "alive": alive, "detail": detail}
 
 
-def probe_all(timeout: float = TIMEOUT) -> list[dict]:
-    return [probe_backend(k, timeout=timeout) for k in REGISTRY]
+def probe_all(ports: dict[str, int | None] | None = None, timeout: float = TIMEOUT) -> list[dict]:
+    ports = ports or {}
+    return [probe_backend(k, port=ports.get(k), timeout=timeout) for k in REGISTRY]
 
 
-def probe_gateway(host: str = "127.0.0.1", port: int = 46701, timeout: float = TIMEOUT) -> dict:
-    alive, detail = probe_port(port, path="/v1/models", timeout=timeout)
+def probe_gateway(
+    host: str = "127.0.0.1", port: int | None = None, timeout: float = TIMEOUT
+) -> dict:
+    from alum.config import mesh_base_url
+    from alum.ports import GATEWAY_DEFAULT_PORT
+
+    port = port if port is not None else resolve("gateway")
+    alive, detail = probe_url(
+        mesh_base_url(host, port or GATEWAY_DEFAULT_PORT) + "/v1/models", timeout=timeout
+    )
     health = {}
     if alive:
         try:
@@ -119,7 +129,11 @@ def _alcf_models_via_cli(timeout: float = 60.0) -> list[str]:
         return []
     try:
         proc = subprocess.run(
-            [exe, "models", "--json"], capture_output=True, text=True, timeout=timeout, check=False
+            [exe, "models", "--json"],
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+            check=False,
         )
     except Exception:  # noqa: BLE001 — fall through to next source
         return []
@@ -152,9 +166,10 @@ def _asksage_models_via_cache() -> list[str]:
     return sorted(chat) if isinstance(chat, dict) else []
 
 
-def ensure_ollama(timeout: float = 30.0) -> bool:
+def ensure_ollama(port: int | None = None, timeout: float = 30.0) -> bool:
     """Make sure the local Ollama daemon is up, starting it if needed."""
-    alive, _ = probe_port(REGISTRY["ollama"].default_port, path="/api/tags", timeout=TIMEOUT)
+    port = resolve("ollama", port)
+    alive, _ = probe_port(port, path="/api/tags", timeout=TIMEOUT)
     if alive:
         return True
     exe = shutil.which("ollama")
@@ -168,34 +183,36 @@ def ensure_ollama(timeout: float = 30.0) -> bool:
     deadline = time.time() + timeout
     while time.time() < deadline:
         time.sleep(1.0)
-        alive, _ = probe_port(REGISTRY["ollama"].default_port, path="/api/tags", timeout=TIMEOUT)
+        alive, _ = probe_port(port, path="/api/tags", timeout=TIMEOUT)
         if alive:
             return True
     return False
 
 
-def fetch_upstream_models(key: str, timeout: float = 15.0) -> list[str]:
+def fetch_upstream_models(key: str, port: int | None = None, timeout: float = 15.0) -> list[str]:
     """Best-effort model ids for the wizard (local-first, then fallbacks)."""
     from alum.backends import CURATED_MODELS
 
     backend = REGISTRY[key]
+    port = resolve(key, port)
+    local_url = backend.models_url(port)
     sources: list[list[str]] = []
 
     if key == "ollama":
-        data = _fetch_json(backend.models_url, timeout) or {}
+        data = _fetch_json(local_url, timeout) or {}
         sources.append(_ids_from_ollama_tags(data))
     elif key == "alcf":
-        data = _fetch_json(backend.models_url, timeout) or {}
+        data = _fetch_json(local_url, timeout) or {}
         sources.append(_ids_from_openai_models(data))
         if not sources[-1]:
             sources.append(_alcf_models_via_cli())
     elif key == "asksage":
-        data = _fetch_json(backend.models_url, timeout) or {}
+        data = _fetch_json(local_url, timeout) or {}
         sources.append(_ids_from_openai_models(data))
         if not sources[-1]:
             sources.append(_asksage_models_via_cache())
     else:  # argo and future plain OpenAI-compat backends
-        data = _fetch_json(backend.models_url, timeout) or {}
+        data = _fetch_json(local_url, timeout) or {}
         sources.append(_ids_from_openai_models(data))
         if not sources[-1] and backend.upstream_models_url:
             upstream = _fetch_json(backend.upstream_models_url, timeout=20.0) or {}

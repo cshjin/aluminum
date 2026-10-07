@@ -4,8 +4,7 @@ ALUM aggregates **Argo**, **ALCF**, **AskSage**, and local **Ollama**
 (including Ollama cloud models) behind one OpenAI-compatible endpoint.
 
 The translation mesh is [`llm-rosetta-gateway`](https://github.com/Oaklight/llm-rosetta),
-served by default on port **46701** — commemorating Argonne National
-Laboratory's founding on **1 July 1946**.
+served by default on port **46701**.
 
 ALUM itself is a **configuration & orchestration layer**:
 

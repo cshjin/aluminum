@@ -5,7 +5,8 @@ No. ALUM generates its config and launches it. Protocol translation stays
 entirely in `llm-rosetta`.
 
 **Why port 46701?**
-It commemorates Argonne National Laboratory's founding on 1 July 1946.
+It is just the default. Override it with `alum setup` (Step 1), `--port`,
+or the `ALUM_PORT` env var.
 
 **Can I use ALUM on a machine with only some backends?**
 Yes — that is the point. `alum doctor` shows what is reachable; `alum setup`

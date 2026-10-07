@@ -1,9 +1,8 @@
 """Backend registry: one entry per upstream service.
 
-Each backend knows:
-- its default local port,
-- how to build gateway provider block(s),
-- how to fetch its upstream model list for the setup wizard.
+No machine-specific ports live here — see ``alum.ports``. Each backend
+declares *templates* (``{port}`` placeholder); concrete URLs are built at
+runtime from resolved ports so generated configs match the user's machine.
 """
 
 from __future__ import annotations
@@ -15,38 +14,44 @@ from dataclasses import dataclass
 class Backend:
     key: str
     label: str
-    default_port: int
-    gateway_providers: dict
-    models_url: str = ""
+    # Gateway provider block template: (provider_name, provider_type, base_path).
+    # base_path is appended to ``http://127.0.0.1:{port}``.
+    provider_name: str
+    provider_type: str
+    base_path: str
+    # Local proxy endpoints (port filled in at runtime).
+    models_path: str = "/v1/models"
     description: str = ""
     # CLI entry that serves this backend (informational only).
     serve_hint: str = ""
     # Direct upstream model catalogue (no local proxy needed).
-    # Argo: prod endpoint is public (no auth); note its IDs are display-style
-    # ("Claude Opus 5") and differ from the local dev proxy's routable IDs
-    # ("argo:claude-opus-5"), so the local proxy stays the primary source.
     upstream_models_url: str = ""
     # Path (under platformdirs user_config_dir) to a cached model catalogue.
     cache_file: str = ""
 
+    def base_url(self, port: int) -> str:
+        return f"http://127.0.0.1:{port}{self.base_path}"
 
-def _providers_for(base_url: str, kind: str = "openai_chat") -> dict:
-    return {"type": kind, "base_url": base_url, "api_key": "dummy"}
+    def models_url(self, port: int) -> str:
+        return f"http://127.0.0.1:{port}{self.models_path}"
+
+    def provider_block(self, port: int) -> dict:
+        return {
+            self.provider_name: {
+                "type": self.provider_type,
+                "base_url": self.base_url(port),
+                "api_key": "dummy",
+            }
+        }
 
 
 REGISTRY: dict[str, Backend] = {
     "argo": Backend(
         key="argo",
         label="Argo (ANL gateway)",
-        default_port=11444,
-        gateway_providers={
-            "argo": {
-                "type": "openai_chat",
-                "base_url": "http://127.0.0.1:11444/v1",
-                "api_key": "dummy",
-            }
-        },
-        models_url="http://127.0.0.1:11444/v1/models",
+        provider_name="argo",
+        provider_type="openai_chat",
+        base_path="/v1",
         description="ANL Argo gateway; all models over OpenAI chat "
         "(argo-proxy also speaks Anthropic natively, the mesh translates).",
         serve_hint="argo-proxy serve",
@@ -55,18 +60,18 @@ REGISTRY: dict[str, Backend] = {
     "alcf": Backend(
         key="alcf",
         label="ALCF / Sophia cluster",
-        default_port=11445,
-        gateway_providers={"alcf": _providers_for("http://127.0.0.1:11445/v1")},
-        models_url="http://127.0.0.1:11445/v1/models",
+        provider_name="alcf",
+        provider_type="openai_chat",
+        base_path="/v1",
         description="ALCF open models (Sophia/Metis/Minerva, vLLM).",
         serve_hint="alcf-proxy serve",
     ),
     "asksage": Backend(
         key="asksage",
         label="AskSage",
-        default_port=11446,
-        gateway_providers={"AskSage": _providers_for("http://127.0.0.1:11446/v1")},
-        models_url="http://127.0.0.1:11446/v1/models",
+        provider_name="AskSage",
+        provider_type="openai_chat",
+        base_path="/v1",
         description="AskSage proxy (needs API key + ANL cert).",
         serve_hint="asksage-proxy",
         cache_file="asksage_proxy/available_models.json",
@@ -74,16 +79,14 @@ REGISTRY: dict[str, Backend] = {
     "ollama": Backend(
         key="ollama",
         label="Local Ollama (incl. cloud models)",
-        default_port=11434,
-        gateway_providers={"ollama": _providers_for("http://127.0.0.1:11434/v1")},
-        models_url="http://127.0.0.1:11434/api/tags",
+        provider_name="ollama",
+        provider_type="openai_chat",
+        base_path="/v1",
+        models_path="/api/tags",
         description="Local Ollama daemon; cloud models need `ollama signin`.",
         serve_hint="ollama serve",
     ),
 }
-
-GATEWAY_DEFAULT_HOST = "127.0.0.1"
-GATEWAY_DEFAULT_PORT = 46701  # ANL founded 1 July 1946
 
 # Curated fallback models per provider (used when live discovery fails).
 CURATED_MODELS: dict[str, list[str]] = {

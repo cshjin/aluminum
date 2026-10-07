@@ -21,10 +21,32 @@ def test_build_config_contains_server_and_models():
         "alcf:gpt-oss-120b": "gpt-oss-120b",
         "ollama:gpt-oss-120b-cloud": "gpt-oss:120b-cloud",
     }
-    cfg = build_config(["alcf", "ollama"], models, port=46701)
+    cfg = build_config(
+        ["alcf", "ollama"],
+        models,
+        port=46701,
+        backend_ports={"alcf": 8102, "ollama": 8104},
+    )
     assert cfg["server"]["port"] == 46701
     assert set(cfg["providers"]) == {"alcf", "ollama"}
     assert cfg["models"]["alcf:gpt-oss-120b"]["provider"] == "alcf"
+    assert cfg["providers"]["alcf"]["base_url"] == "http://127.0.0.1:8102/v1"
+    assert cfg["providers"]["ollama"]["base_url"] == "http://127.0.0.1:8104/v1"
+
+
+def test_build_config_uses_placeholder_ports_by_default():
+    cfg = build_config(["argo"], {"argo:x": "x"})
+    assert cfg["providers"]["argo"]["base_url"] == "http://127.0.0.1:8101/v1"
+
+
+def test_resolve_order_explicit_env_default(monkeypatch):
+    from alum.ports import resolve
+
+    monkeypatch.setenv("ALUM_ARGO_PORT", "12345")
+    assert resolve("argo") == 12345
+    assert resolve("argo", explicit=9999) == 9999
+    monkeypatch.delenv("ALUM_ARGO_PORT")
+    assert resolve("argo") == 8101
 
 
 def test_default_models_use_curated_fallbacks():
