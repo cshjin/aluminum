@@ -1,6 +1,6 @@
 """Backend registry: one entry per upstream service.
 
-No machine-specific ports live here — see ``alum.ports``. Each backend
+No machine-specific ports live here — see ``aluminum.ports``. Each backend
 declares *templates* (``{port}`` placeholder); concrete URLs are built at
 runtime from resolved ports so generated configs match the user's machine.
 """

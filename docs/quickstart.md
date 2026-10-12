@@ -16,11 +16,11 @@ mkdocs serve
 ## 2. Check the machine
 
 ```bash
-alum doctor
+aluminum doctor
 ```
 
 Expected: one row per backend (`argo`, `alcf`, `asksage`, `ollama`) plus the
-mesh gateway on `127.0.0.1:46701`. Tell ALUM where your proxies live via
+mesh gateway on `127.0.0.1:46701`. Tell ALUMINUM where your proxies live via
 flags (`--argo-port …`), env vars (`ALUM_ARGO_PORT` … — see Architecture),
 or the setup prompts. ❌ rows simply mean that proxy is not
 running (or the port is wrong) — the wizard still offers curated
@@ -29,7 +29,7 @@ fallbacks.
 ## 3. Run the wizard
 
 ```bash
-alum setup
+aluminum setup
 ```
 
 Four steps:
@@ -45,13 +45,13 @@ Four steps:
 Non-interactive equivalent (CI / containers):
 
 ```bash
-alum setup --yes
+aluminum setup --yes
 ```
 
 ## 4. Serve the mesh
 
 ```bash
-alum serve
+aluminum serve
 ```
 
 Then point any client at the mesh:
@@ -64,7 +64,7 @@ export OPENAI_API_KEY="dummy"
 ## 5. Verify
 
 ```bash
-alum status
-alum models
+aluminum status
+aluminum models
 curl http://127.0.0.1:46701/v1/models
 ```

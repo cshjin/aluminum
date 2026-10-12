@@ -1,14 +1,14 @@
 # CLI Reference
 
 ```
-alum --help
-alum doctor [--timeout 5.0] [--argo-port N] [--alcf-port N] [--asksage-port N] [--ollama-port N]
-alum setup [-c CONFIG] [--host 127.0.0.1] [--port 46701] [--argo-port N] [--alcf-port N] [--asksage-port N] [--ollama-port N] [--yes] [--no-banner]
-alum serve [-c CONFIG] [--host 127.0.0.1] [--port 46701] [--no-banner]
-alum status [--host 127.0.0.1] [--port 46701]
-alum models [--host 127.0.0.1] [--port 46701] [--json]
-alum show [-c CONFIG]
-alum version
+aluminum --help
+aluminum doctor [--timeout 5.0] [--argo-port N] [--alcf-port N] [--asksage-port N] [--ollama-port N]
+aluminum setup [-c CONFIG] [--host 127.0.0.1] [--port 46701] [--argo-port N] [--alcf-port N] [--asksage-port N] [--ollama-port N] [--yes] [--no-banner]
+aluminum serve [-c CONFIG] [--host 127.0.0.1] [--port 46701] [--no-banner]
+aluminum status [--host 127.0.0.1] [--port 46701]
+aluminum models [--host 127.0.0.1] [--port 46701] [--json]
+aluminum show [-c CONFIG]
+aluminum version
 ```
 
 Backend ports resolve as: CLI flag > `ALUM_ARGO_PORT` / `ALUM_ALCF_PORT` /

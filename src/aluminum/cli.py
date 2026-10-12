@@ -1,4 +1,4 @@
-"""`alum` command line interface."""
+"""`aluminum` command line interface."""
 
 from __future__ import annotations
 
@@ -10,25 +10,25 @@ import httpx
 from rich.console import Console
 from rich.table import Table
 
-from alum import __version__
-from alum.backends import CURATED_MODELS, REGISTRY, mesh_name
-from alum.banner import print_banner
-from alum.config import mesh_base_url
-from alum.detect import (
+from aluminum import __version__
+from aluminum.backends import CURATED_MODELS, REGISTRY, mesh_name
+from aluminum.banner import print_banner
+from aluminum.config import mesh_base_url
+from aluminum.detect import (
     ensure_ollama,
     fetch_upstream_models,
     port_in_use,
     probe_all,
     probe_gateway,
 )
-from alum.gateway import (
+from aluminum.gateway import (
     build_config,
     config_path,
     default_models_for,
     launch_gateway,
     write_config,
 )
-from alum.ports import GATEWAY_DEFAULT_PORT, resolve, resolve_all
+from aluminum.ports import GATEWAY_DEFAULT_PORT, resolve, resolve_all
 
 console = Console()
 
@@ -47,9 +47,9 @@ def _interactive() -> bool:
 
 
 @click.group()
-@click.version_option(__version__, prog_name="alum")
+@click.version_option(__version__, prog_name="aluminum")
 def cli() -> None:
-    """ALUM — An LLM Unified Mesh (one-command LLM aggregator)."""
+    """ALUMINUM — An LLM Unified Mesh (one-command LLM aggregator)."""
 
 
 def _backend_port_options(fn):
@@ -76,7 +76,7 @@ def doctor(
 ) -> None:
     """Probe local backends and the mesh gateway."""
     ports = {"argo": argo_port, "alcf": alcf_port, "asksage": asksage_port, "ollama": ollama_port}
-    table = Table(title="ALUM doctor")
+    table = Table(title="ALUMINUM doctor")
     table.add_column("backend")
     table.add_column("endpoint")
     table.add_column("status")
@@ -97,7 +97,7 @@ def doctor(
     )
     console.print(table)
     if not gw["alive"]:
-        console.print("[dim]Hint: run `alum setup` then `alum serve`.[/dim]")
+        console.print("[dim]Hint: run `aluminum setup` then `aluminum serve`.[/dim]")
 
 
 def _multiselect(prompt_text: str, choices: list[str], defaults: list[str]) -> list[str]:
@@ -281,7 +281,9 @@ def setup(
     write_config(cfg, path)
     console.print(f"\n✅ Wrote gateway config to [bold]{path}[/bold]")
     console.print(f"   Providers: {', '.join(provider_keys)}  |  Models: {len(models)}")
-    console.print(f"   Next: [bold]alum serve[/bold]  (serves on {mesh_base_url(host, port)}/v1)")
+    console.print(
+        f"   Next: [bold]aluminum serve[/bold]  (serves on {mesh_base_url(host, port)}/v1)"
+    )
 
 
 @cli.command()
@@ -290,12 +292,12 @@ def setup(
 @click.option("--port", default=GATEWAY_DEFAULT_PORT)
 @click.option("--no-banner", is_flag=True, help="Suppress the startup banner.")
 def serve(config: str | None, host: str, port: int, no_banner: bool) -> None:
-    """Launch llm-rosetta-gateway with the alum-generated config."""
+    """Launch llm-rosetta-gateway with the aluminum-generated config."""
     if not no_banner:
         print_banner()
     path = config_path(config)
     if not path.exists():
-        console.print(f"[red]No config at {path}. Run `alum setup` first.[/red]")
+        console.print(f"[red]No config at {path}. Run `aluminum setup` first.[/red]")
         sys.exit(1)
     console.print(f"Starting mesh gateway on {mesh_base_url(host, port)} (config: {path}) …")
     console.print("[dim]Make sure upstream proxies are running (argo/alcf/asksage/ollama).[/dim]")
@@ -370,7 +372,7 @@ def show(config: str | None) -> None:
     """Print the current gateway config."""
     path = config_path(config)
     if not path.exists():
-        console.print(f"[red]No config at {path}. Run `alum setup` first.[/red]")
+        console.print(f"[red]No config at {path}. Run `aluminum setup` first.[/red]")
         sys.exit(1)
     click.echo(path.read_text())
 

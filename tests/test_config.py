@@ -1,7 +1,7 @@
 """Smoke tests that run fully offline."""
 
-from alum.backends import mesh_name
-from alum.gateway import build_config, default_models_for, infer_provider, render_jsonc
+from aluminum.backends import mesh_name
+from aluminum.gateway import build_config, default_models_for, infer_provider, render_jsonc
 
 
 def test_mesh_name_prefixes():
@@ -40,7 +40,7 @@ def test_build_config_uses_placeholder_ports_by_default():
 
 
 def test_resolve_order_explicit_env_default(monkeypatch):
-    from alum.ports import resolve
+    from aluminum.ports import resolve
 
     monkeypatch.setenv("ALUM_ARGO_PORT", "12345")
     assert resolve("argo") == 12345

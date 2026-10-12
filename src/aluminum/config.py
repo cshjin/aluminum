@@ -1,6 +1,6 @@
-"""Shared constants for ALUM."""
+"""Shared constants for ALUMINUM."""
 
-from alum.ports import GATEWAY_DEFAULT_PORT
+from aluminum.ports import GATEWAY_DEFAULT_PORT
 
 
 def mesh_base_url(host: str = "127.0.0.1", port: int = GATEWAY_DEFAULT_PORT) -> str:

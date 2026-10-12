@@ -1,7 +1,7 @@
-# ALUM — An LLM Unified Mesh
+# ALUMINUM — An LLM Unified Mesh
 
 <p align="center">
-  <img src="docs/assets/alum-logo.svg" alt="ALUM logo" width="480">
+  <img src="docs/assets/ALUMINUM_logo.png" alt="ALUMINUM logo" width="480">
 </p>
 
 One-command aggregator that unifies **Argo**, **ALCF**, **AskSage** and local
@@ -9,7 +9,7 @@ One-command aggregator that unifies **Argo**, **ALCF**, **AskSage** and local
 [`llm-rosetta-gateway`](https://github.com/Oaklight/llm-rosetta) as the
 translation mesh (default port **46701**).
 
-ALUM is a **configuration & orchestration layer**: it does not re-implement the
+ALUMINUM is a **configuration & orchestration layer**: it does not re-implement the
 gateway. It detects which upstream services are alive on this machine, lets you
 pick services + models in the terminal, generates `config.jsonc` for
 `llm-rosetta-gateway`, and launches everything in the right order.
@@ -30,13 +30,13 @@ pick services + models in the terminal, generates `config.jsonc` for
 ## Quickstart
 
 ```bash
-pip install -e ".[all]"        # or: pip install alum[all]
+pip install -e ".[all]"        # or: pip install aluminum[all]
 
-alum doctor                     # probe local backends + gateway
-alum setup                      # interactive wizard: pick services, pick models
-alum serve                      # launch backends (if needed) + gateway on :46701
-alum status                     # health of mesh + per-provider stats
-alum models                     # list unified models through the mesh
+aluminum doctor                     # probe local backends + gateway
+aluminum setup                      # interactive wizard: pick services, pick models
+aluminum serve                      # launch backends (if needed) + gateway on :46701
+aluminum status                     # health of mesh + per-provider stats
+aluminum models                     # list unified models through the mesh
 ```
 
 Point any OpenAI-compatible client at the mesh:
@@ -64,7 +64,7 @@ mkdocs serve
 
 ## Layout
 
-- `src/alum/` — CLI + backend registry + gateway config builder
+- `src/aluminum/` — CLI + backend registry + gateway config builder
 - `docs/` — mkdocs-material documentation (English-first)
 - `tests/` — offline unit tests (no network required)
 - `examples/` — sample `config.jsonc` and systemd units

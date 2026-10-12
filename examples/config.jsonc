@@ -1,4 +1,4 @@
-// Example — copy to ~/.config/llm-rosetta-gateway/config.jsonc via `alum setup`.
+// Example — copy to ~/.config/llm-rosetta-gateway/config.jsonc via `aluminum setup`.
 {
     "providers": {
         "argo": {

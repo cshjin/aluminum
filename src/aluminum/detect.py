@@ -12,8 +12,8 @@ from pathlib import Path
 import httpx
 from platformdirs import user_config_dir
 
-from alum.backends import REGISTRY
-from alum.ports import resolve
+from aluminum.backends import REGISTRY
+from aluminum.ports import resolve
 
 TIMEOUT = 5.0
 
@@ -49,8 +49,8 @@ def probe_all(ports: dict[str, int | None] | None = None, timeout: float = TIMEO
 def probe_gateway(
     host: str = "127.0.0.1", port: int | None = None, timeout: float = TIMEOUT
 ) -> dict:
-    from alum.config import mesh_base_url
-    from alum.ports import GATEWAY_DEFAULT_PORT
+    from aluminum.config import mesh_base_url
+    from aluminum.ports import GATEWAY_DEFAULT_PORT
 
     port = port if port is not None else resolve("gateway")
     alive, detail = probe_url(
@@ -175,7 +175,7 @@ def ensure_ollama(port: int | None = None, timeout: float = 30.0) -> bool:
     exe = shutil.which("ollama")
     if not exe:
         return False
-    log = Path("/tmp") / "alum-ollama-serve.log"
+    log = Path("/tmp") / "aluminum-ollama-serve.log"
     with log.open("ab") as fh:
         subprocess.Popen(
             [exe, "serve"], stdout=fh, stderr=subprocess.STDOUT, start_new_session=True
@@ -191,7 +191,7 @@ def ensure_ollama(port: int | None = None, timeout: float = 30.0) -> bool:
 
 def fetch_upstream_models(key: str, port: int | None = None, timeout: float = 15.0) -> list[str]:
     """Best-effort model ids for the wizard (local-first, then fallbacks)."""
-    from alum.backends import CURATED_MODELS
+    from aluminum.backends import CURATED_MODELS
 
     backend = REGISTRY[key]
     port = resolve(key, port)

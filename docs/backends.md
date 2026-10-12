@@ -17,7 +17,7 @@ through the local proxy. Fallback order per backend:
     (37 vs 57 entries, verified 2026-10-06). The wizard therefore lists the
     **local** proxy first; the prod URL is only a fallback when the proxy is
     down. If you switch `argo-proxy` to the prod environment, re-run
-    `alum setup` to pick up the new ids.
+    `aluminum setup` to pick up the new ids.
 
 ## Argo (`argo-proxy`)
 
@@ -48,12 +48,12 @@ through the local proxy. Fallback order per backend:
 - Local daemon; also serves Ollama **cloud** models (`*:cloud`) after
   `ollama signin`. Cloud entries appear with size `-` in `ollama list`.
 - Model discovery uses `/api/tags` (different schema from `/v1/models`);
-  ALUM normalises both to a plain id list.
+  ALUMINUM normalises both to a plain id list.
 - Serve hint: `ollama serve`.
 
 ## Adding a new backend
 
-1. Add an entry to `REGISTRY` in `src/alum/backends.py`
+1. Add an entry to `REGISTRY` in `src/aluminum/backends.py`
    (key, label, port, gateway provider block, models URL).
 2. Add curated fallbacks in `CURATED_MODELS`.
 3. Extend `mesh_name()` prefix mapping.

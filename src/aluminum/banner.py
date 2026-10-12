@@ -1,4 +1,4 @@
-"""Startup banner for ALUM (ANSI block style, like argo-proxy / llm-rosetta-gateway)."""
+"""Startup banner for ALUMINUM (ANSI block style, like argo-proxy / llm-rosetta-gateway)."""
 
 from __future__ import annotations
 
@@ -41,10 +41,38 @@ _M = [
     "╚═╝     ╚═╝",
 ]
 
-_LETTERS = [_A, _L, _U, _M]
+_I = [
+    "██╗",
+    "██║",
+    "██║",
+    "██║",
+    "██║",
+    "╚═╝",
+]
 
-# One color per letter: cyan / green / amber / magenta (bright variants pop on dark terminals).
-COLORS = ["bright_cyan", "bright_green", "bright_yellow", "bright_magenta"]
+_N = [
+    "███╗   ██╗",
+    "████╗  ██║",
+    "██╔██╗ ██║",
+    "██║╚██╗██║",
+    "██║ ╚████║",
+    "╚═╝  ╚═══╝",
+]
+
+_LETTERS = [_A, _L, _U, _M, _I, _N, _U, _M]
+
+# One color per letter (repeated letters share a color):
+# A cyan / L green / U yellow / M magenta / I blue / N red.
+COLORS = [
+    "bright_cyan",
+    "bright_green",
+    "bright_yellow",
+    "bright_magenta",
+    "bright_blue",
+    "bright_red",
+    "bright_yellow",
+    "bright_magenta",
+]
 
 SEP = " "
 
@@ -64,11 +92,11 @@ def _colored() -> str:
 
 def print_banner() -> None:
     """Print the startup banner with version info."""
-    from alum import __version__
-    from alum.ports import GATEWAY_DEFAULT_PORT
+    from aluminum import __version__
+    from aluminum.ports import GATEWAY_DEFAULT_PORT
 
     use_color = sys.stdout.isatty() and "NO_COLOR" not in os.environ
     print(_colored() if use_color else BANNER)
-    print(f"  ALUM — An LLM Unified Mesh  v{__version__}")
+    print(f"  ALUMINUM — An LLM Unified Mesh  v{__version__}")
     print(f"  mesh default: http://127.0.0.1:{GATEWAY_DEFAULT_PORT}/v1")
     print()

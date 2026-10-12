@@ -17,20 +17,20 @@ For flaky networks use `autossh -M 0 -N -L …`.
 Simplest (interactive hosts):
 
 ```bash
-tmux new -s alum
-alum serve
+tmux new -s aluminum
+aluminum serve
 # Ctrl+B, D to detach
 ```
 
-Stable (servers), as a user systemd unit `~/.config/systemd/user/alum.service`:
+Stable (servers), as a user systemd unit `~/.config/systemd/user/aluminum.service`:
 
 ```ini
 [Unit]
-Description=ALUM mesh gateway
+Description=ALUMINUM mesh gateway
 After=network.target
 
 [Service]
-ExecStart=%h/.local/bin/alum serve
+ExecStart=%h/.local/bin/aluminum serve
 Restart=on-failure
 
 [Install]
@@ -38,7 +38,7 @@ WantedBy=default.target
 ```
 
 ```bash
-systemctl --user enable --now alum
+systemctl --user enable --now aluminum
 ```
 
 ## Client wiring
@@ -59,7 +59,7 @@ export ANTHROPIC_AUTH_TOKEN="dummy"
 
 ## Troubleshooting
 
-- **Gateway up, model errors** — check `alum status` provider table; the
+- **Gateway up, model errors** — check `aluminum status` provider table; the
   failing upstream (Argo/ALCF/AskSage/Ollama) is usually down or its key/cert
   expired.
 - **AskSage SSL errors** — verify `cert_path` in

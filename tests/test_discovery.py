@@ -4,8 +4,8 @@ import json
 
 import httpx
 
-from alum import detect
-from alum.detect import fetch_upstream_models, parse_port, port_in_use
+from aluminum import detect
+from aluminum.detect import fetch_upstream_models, parse_port, port_in_use
 
 
 def test_parse_port():
@@ -18,8 +18,18 @@ def test_parse_port():
 
 
 def test_port_in_use_detects_live_gateway():
-    assert port_in_use(46701) is True
-    assert port_in_use(9) is False  # discard port, almost surely closed
+    import socket
+
+    srv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    srv.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    srv.bind(("127.0.0.1", 0))
+    srv.listen(1)
+    live = srv.getsockname()[1]
+    try:
+        assert port_in_use(live) is True
+    finally:
+        srv.close()
+    assert port_in_use(live) is False
 
 
 class _Resp:
