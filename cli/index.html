@@ -27,7 +27,7 @@
     
     
       
-        <title>CLI Reference - ALUM — An LLM Unified Mesh</title>
+        <title>CLI Reference - ALUMINUM — An LLM Unified Mesh</title>
       
     
     
@@ -82,7 +82,7 @@
 
 <header class="md-header" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href=".." title="ALUM — An LLM Unified Mesh" class="md-header__button md-logo" aria-label="ALUM — An LLM Unified Mesh" data-md-component="logo">
+    <a href=".." title="ALUMINUM — An LLM Unified Mesh" class="md-header__button md-logo" aria-label="ALUMINUM — An LLM Unified Mesh" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -96,7 +96,7 @@
       <div class="md-header__ellipsis">
         <div class="md-header__topic">
           <span class="md-ellipsis">
-            ALUM — An LLM Unified Mesh
+            ALUMINUM — An LLM Unified Mesh
           </span>
         </div>
         <div class="md-header__topic" data-md-component="header-topic">
@@ -338,13 +338,13 @@
 
 <nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href=".." title="ALUM — An LLM Unified Mesh" class="md-nav__button md-logo" aria-label="ALUM — An LLM Unified Mesh" data-md-component="logo">
+    <a href=".." title="ALUMINUM — An LLM Unified Mesh" class="md-nav__button md-logo" aria-label="ALUMINUM — An LLM Unified Mesh" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
 
     </a>
-    ALUM — An LLM Unified Mesh
+    ALUMINUM — An LLM Unified Mesh
   </label>
   
     <div class="md-nav__source">
@@ -732,14 +732,14 @@
 
 
 <h1 id="cli-reference">CLI Reference</h1>
-<div class="highlight"><pre><span></span><code>alum --help
-alum doctor [--timeout 5.0] [--argo-port N] [--alcf-port N] [--asksage-port N] [--ollama-port N]
-alum setup [-c CONFIG] [--host 127.0.0.1] [--port 46701] [--argo-port N] [--alcf-port N] [--asksage-port N] [--ollama-port N] [--yes] [--no-banner]
-alum serve [-c CONFIG] [--host 127.0.0.1] [--port 46701] [--no-banner]
-alum status [--host 127.0.0.1] [--port 46701]
-alum models [--host 127.0.0.1] [--port 46701] [--json]
-alum show [-c CONFIG]
-alum version
+<div class="highlight"><pre><span></span><code>aluminum --help
+aluminum doctor [--timeout 5.0] [--argo-port N] [--alcf-port N] [--asksage-port N] [--ollama-port N]
+aluminum setup [-c CONFIG] [--host 127.0.0.1] [--port 46701] [--argo-port N] [--alcf-port N] [--asksage-port N] [--ollama-port N] [--yes] [--no-banner]
+aluminum serve [-c CONFIG] [--host 127.0.0.1] [--port 46701] [--no-banner]
+aluminum status [--host 127.0.0.1] [--port 46701]
+aluminum models [--host 127.0.0.1] [--port 46701] [--json]
+aluminum show [-c CONFIG]
+aluminum version
 </code></pre></div>
 <p>Backend ports resolve as: CLI flag &gt; <code>ALUM_ARGO_PORT</code> / <code>ALUM_ALCF_PORT</code> /
 <code>ALUM_ASKSAGE_PORT</code> / <code>ALUM_OLLAMA_PORT</code> env vars &gt; built-in placeholders

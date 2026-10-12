@@ -27,7 +27,7 @@
     
     
       
-        <title>Quickstart - ALUM — An LLM Unified Mesh</title>
+        <title>Quickstart - ALUMINUM — An LLM Unified Mesh</title>
       
     
     
@@ -82,7 +82,7 @@
 
 <header class="md-header" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href=".." title="ALUM — An LLM Unified Mesh" class="md-header__button md-logo" aria-label="ALUM — An LLM Unified Mesh" data-md-component="logo">
+    <a href=".." title="ALUMINUM — An LLM Unified Mesh" class="md-header__button md-logo" aria-label="ALUMINUM — An LLM Unified Mesh" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -96,7 +96,7 @@
       <div class="md-header__ellipsis">
         <div class="md-header__topic">
           <span class="md-ellipsis">
-            ALUM — An LLM Unified Mesh
+            ALUMINUM — An LLM Unified Mesh
           </span>
         </div>
         <div class="md-header__topic" data-md-component="header-topic">
@@ -338,13 +338,13 @@
 
 <nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href=".." title="ALUM — An LLM Unified Mesh" class="md-nav__button md-logo" aria-label="ALUM — An LLM Unified Mesh" data-md-component="logo">
+    <a href=".." title="ALUMINUM — An LLM Unified Mesh" class="md-nav__button md-logo" aria-label="ALUMINUM — An LLM Unified Mesh" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
 
     </a>
-    ALUM — An LLM Unified Mesh
+    ALUMINUM — An LLM Unified Mesh
   </label>
   
     <div class="md-nav__source">
@@ -762,16 +762,16 @@
 mkdocs<span class="w"> </span>serve
 </code></pre></div>
 <h2 id="2-check-the-machine">2. Check the machine</h2>
-<div class="highlight"><pre><span></span><code>alum<span class="w"> </span>doctor
+<div class="highlight"><pre><span></span><code>aluminum<span class="w"> </span>doctor
 </code></pre></div>
 <p>Expected: one row per backend (<code>argo</code>, <code>alcf</code>, <code>asksage</code>, <code>ollama</code>) plus the
-mesh gateway on <code>127.0.0.1:46701</code>. Tell ALUM where your proxies live via
+mesh gateway on <code>127.0.0.1:46701</code>. Tell ALUMINUM where your proxies live via
 flags (<code>--argo-port …</code>), env vars (<code>ALUM_ARGO_PORT</code> … — see Architecture),
 or the setup prompts. ❌ rows simply mean that proxy is not
 running (or the port is wrong) — the wizard still offers curated
 fallbacks.</p>
 <h2 id="3-run-the-wizard">3. Run the wizard</h2>
-<div class="highlight"><pre><span></span><code>alum<span class="w"> </span>setup
+<div class="highlight"><pre><span></span><code>aluminum<span class="w"> </span>setup
 </code></pre></div>
 <p>Four steps:</p>
 <ol>
@@ -784,18 +784,18 @@ fallbacks.</p>
    (previous file is backed up to <code>.jsonc.bak</code>).</li>
 </ol>
 <p>Non-interactive equivalent (CI / containers):</p>
-<div class="highlight"><pre><span></span><code>alum<span class="w"> </span>setup<span class="w"> </span>--yes
+<div class="highlight"><pre><span></span><code>aluminum<span class="w"> </span>setup<span class="w"> </span>--yes
 </code></pre></div>
 <h2 id="4-serve-the-mesh">4. Serve the mesh</h2>
-<div class="highlight"><pre><span></span><code>alum<span class="w"> </span>serve
+<div class="highlight"><pre><span></span><code>aluminum<span class="w"> </span>serve
 </code></pre></div>
 <p>Then point any client at the mesh:</p>
 <div class="highlight"><pre><span></span><code><span class="nb">export</span><span class="w"> </span><span class="nv">OPENAI_BASE_URL</span><span class="o">=</span><span class="s2">"http://127.0.0.1:46701/v1"</span>
 <span class="nb">export</span><span class="w"> </span><span class="nv">OPENAI_API_KEY</span><span class="o">=</span><span class="s2">"dummy"</span>
 </code></pre></div>
 <h2 id="5-verify">5. Verify</h2>
-<div class="highlight"><pre><span></span><code>alum<span class="w"> </span>status
-alum<span class="w"> </span>models
+<div class="highlight"><pre><span></span><code>aluminum<span class="w"> </span>status
+aluminum<span class="w"> </span>models
 curl<span class="w"> </span>http://127.0.0.1:46701/v1/models
 </code></pre></div>
 

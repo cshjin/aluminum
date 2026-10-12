@@ -27,7 +27,7 @@
     
     
       
-        <title>Backends - ALUM — An LLM Unified Mesh</title>
+        <title>Backends - ALUMINUM — An LLM Unified Mesh</title>
       
     
     
@@ -82,7 +82,7 @@
 
 <header class="md-header" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href=".." title="ALUM — An LLM Unified Mesh" class="md-header__button md-logo" aria-label="ALUM — An LLM Unified Mesh" data-md-component="logo">
+    <a href=".." title="ALUMINUM — An LLM Unified Mesh" class="md-header__button md-logo" aria-label="ALUMINUM — An LLM Unified Mesh" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -96,7 +96,7 @@
       <div class="md-header__ellipsis">
         <div class="md-header__topic">
           <span class="md-ellipsis">
-            ALUM — An LLM Unified Mesh
+            ALUMINUM — An LLM Unified Mesh
           </span>
         </div>
         <div class="md-header__topic" data-md-component="header-topic">
@@ -338,13 +338,13 @@
 
 <nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href=".." title="ALUM — An LLM Unified Mesh" class="md-nav__button md-logo" aria-label="ALUM — An LLM Unified Mesh" data-md-component="logo">
+    <a href=".." title="ALUMINUM — An LLM Unified Mesh" class="md-nav__button md-logo" aria-label="ALUMINUM — An LLM Unified Mesh" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
 
     </a>
-    ALUM — An LLM Unified Mesh
+    ALUMINUM — An LLM Unified Mesh
   </label>
   
     <div class="md-nav__source">
@@ -799,7 +799,7 @@ local dev proxy serves routable ids (<code>argo:claude-opus-5</code>) — zero o
 (37 vs 57 entries, verified 2026-10-06). The wizard therefore lists the
 <strong>local</strong> proxy first; the prod URL is only a fallback when the proxy is
 down. If you switch <code>argo-proxy</code> to the prod environment, re-run
-<code>alum setup</code> to pick up the new ids.</p>
+<code>aluminum setup</code> to pick up the new ids.</p>
 </div>
 <h2 id="argo-argo-proxy">Argo (<code>argo-proxy</code>)</h2>
 <ul>
@@ -830,12 +830,12 @@ down. If you switch <code>argo-proxy</code> to the prod environment, re-run
 <li>Local daemon; also serves Ollama <strong>cloud</strong> models (<code>*:cloud</code>) after
   <code>ollama signin</code>. Cloud entries appear with size <code>-</code> in <code>ollama list</code>.</li>
 <li>Model discovery uses <code>/api/tags</code> (different schema from <code>/v1/models</code>);
-  ALUM normalises both to a plain id list.</li>
+  ALUMINUM normalises both to a plain id list.</li>
 <li>Serve hint: <code>ollama serve</code>.</li>
 </ul>
 <h2 id="adding-a-new-backend">Adding a new backend</h2>
 <ol>
-<li>Add an entry to <code>REGISTRY</code> in <code>src/alum/backends.py</code>
+<li>Add an entry to <code>REGISTRY</code> in <code>src/aluminum/backends.py</code>
    (key, label, port, gateway provider block, models URL).</li>
 <li>Add curated fallbacks in <code>CURATED_MODELS</code>.</li>
 <li>Extend <code>mesh_name()</code> prefix mapping.</li>

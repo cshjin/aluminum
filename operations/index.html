@@ -27,7 +27,7 @@
     
     
       
-        <title>Operations - ALUM — An LLM Unified Mesh</title>
+        <title>Operations - ALUMINUM — An LLM Unified Mesh</title>
       
     
     
@@ -82,7 +82,7 @@
 
 <header class="md-header" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href=".." title="ALUM — An LLM Unified Mesh" class="md-header__button md-logo" aria-label="ALUM — An LLM Unified Mesh" data-md-component="logo">
+    <a href=".." title="ALUMINUM — An LLM Unified Mesh" class="md-header__button md-logo" aria-label="ALUMINUM — An LLM Unified Mesh" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -96,7 +96,7 @@
       <div class="md-header__ellipsis">
         <div class="md-header__topic">
           <span class="md-ellipsis">
-            ALUM — An LLM Unified Mesh
+            ALUMINUM — An LLM Unified Mesh
           </span>
         </div>
         <div class="md-header__topic" data-md-component="header-topic">
@@ -338,13 +338,13 @@
 
 <nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href=".." title="ALUM — An LLM Unified Mesh" class="md-nav__button md-logo" aria-label="ALUM — An LLM Unified Mesh" data-md-component="logo">
+    <a href=".." title="ALUMINUM — An LLM Unified Mesh" class="md-nav__button md-logo" aria-label="ALUMINUM — An LLM Unified Mesh" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
 
     </a>
-    ALUM — An LLM Unified Mesh
+    ALUMINUM — An LLM Unified Mesh
   </label>
   
     <div class="md-nav__source">
@@ -741,23 +741,23 @@ curl<span class="w"> </span>http://localhost:46701/v1/models
 <p>For flaky networks use <code>autossh -M 0 -N -L …</code>.</p>
 <h2 id="persistence">Persistence</h2>
 <p>Simplest (interactive hosts):</p>
-<div class="highlight"><pre><span></span><code>tmux<span class="w"> </span>new<span class="w"> </span>-s<span class="w"> </span>alum
-alum<span class="w"> </span>serve
+<div class="highlight"><pre><span></span><code>tmux<span class="w"> </span>new<span class="w"> </span>-s<span class="w"> </span>aluminum
+aluminum<span class="w"> </span>serve
 <span class="c1"># Ctrl+B, D to detach</span>
 </code></pre></div>
-<p>Stable (servers), as a user systemd unit <code>~/.config/systemd/user/alum.service</code>:</p>
+<p>Stable (servers), as a user systemd unit <code>~/.config/systemd/user/aluminum.service</code>:</p>
 <div class="highlight"><pre><span></span><code><span class="k">[Unit]</span>
-<span class="na">Description</span><span class="o">=</span><span class="s">ALUM mesh gateway</span>
+<span class="na">Description</span><span class="o">=</span><span class="s">ALUMINUM mesh gateway</span>
 <span class="na">After</span><span class="o">=</span><span class="s">network.target</span>
 
 <span class="k">[Service]</span>
-<span class="na">ExecStart</span><span class="o">=</span><span class="s">%h/.local/bin/alum serve</span>
+<span class="na">ExecStart</span><span class="o">=</span><span class="s">%h/.local/bin/aluminum serve</span>
 <span class="na">Restart</span><span class="o">=</span><span class="s">on-failure</span>
 
 <span class="k">[Install]</span>
 <span class="na">WantedBy</span><span class="o">=</span><span class="s">default.target</span>
 </code></pre></div>
-<div class="highlight"><pre><span></span><code>systemctl<span class="w"> </span>--user<span class="w"> </span><span class="nb">enable</span><span class="w"> </span>--now<span class="w"> </span>alum
+<div class="highlight"><pre><span></span><code>systemctl<span class="w"> </span>--user<span class="w"> </span><span class="nb">enable</span><span class="w"> </span>--now<span class="w"> </span>aluminum
 </code></pre></div>
 <h2 id="client-wiring">Client wiring</h2>
 <p>OpenAI-compatible tools (Aider, Cursor, Python SDK):</p>
@@ -770,7 +770,7 @@ alum<span class="w"> </span>serve
 </code></pre></div>
 <h2 id="troubleshooting">Troubleshooting</h2>
 <ul>
-<li><strong>Gateway up, model errors</strong> — check <code>alum status</code> provider table; the
+<li><strong>Gateway up, model errors</strong> — check <code>aluminum status</code> provider table; the
   failing upstream (Argo/ALCF/AskSage/Ollama) is usually down or its key/cert
   expired.</li>
 <li><strong>AskSage SSL errors</strong> — verify <code>cert_path</code> in

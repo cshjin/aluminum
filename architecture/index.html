@@ -27,7 +27,7 @@
     
     
       
-        <title>Architecture - ALUM — An LLM Unified Mesh</title>
+        <title>Architecture - ALUMINUM — An LLM Unified Mesh</title>
       
     
     
@@ -82,7 +82,7 @@
 
 <header class="md-header" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href=".." title="ALUM — An LLM Unified Mesh" class="md-header__button md-logo" aria-label="ALUM — An LLM Unified Mesh" data-md-component="logo">
+    <a href=".." title="ALUMINUM — An LLM Unified Mesh" class="md-header__button md-logo" aria-label="ALUMINUM — An LLM Unified Mesh" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -96,7 +96,7 @@
       <div class="md-header__ellipsis">
         <div class="md-header__topic">
           <span class="md-ellipsis">
-            ALUM — An LLM Unified Mesh
+            ALUMINUM — An LLM Unified Mesh
           </span>
         </div>
         <div class="md-header__topic" data-md-component="header-topic">
@@ -338,13 +338,13 @@
 
 <nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href=".." title="ALUM — An LLM Unified Mesh" class="md-nav__button md-logo" aria-label="ALUM — An LLM Unified Mesh" data-md-component="logo">
+    <a href=".." title="ALUMINUM — An LLM Unified Mesh" class="md-nav__button md-logo" aria-label="ALUMINUM — An LLM Unified Mesh" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
 
     </a>
-    ALUM — An LLM Unified Mesh
+    ALUMINUM — An LLM Unified Mesh
   </label>
   
     <div class="md-nav__source">
@@ -722,7 +722,7 @@ Ollama :8104┘
 <li>uniform <strong>discovery</strong> (which services are up? which models exist?),</li>
 <li>uniform <strong>naming</strong> (<code>argo:…</code>, <code>alcf:…</code>, <code>asksage:…</code>, <code>ollama:…</code>),</li>
 <li>one <strong>generated config</strong> for the gateway instead of hand-edited JSONC,</li>
-<li>one <strong>CLI</strong> (<code>alum</code>) that works the same on every machine.</li>
+<li>one <strong>CLI</strong> (<code>aluminum</code>) that works the same on every machine.</li>
 </ul>
 <h2 id="module-map">Module map</h2>
 <table>
@@ -734,34 +734,34 @@ Ollama :8104┘
 </thead>
 <tbody>
 <tr>
-<td><code>alum.backends</code></td>
+<td><code>aluminum.backends</code></td>
 <td>backend registry, curated fallbacks, mesh naming</td>
 </tr>
 <tr>
-<td><code>alum.detect</code></td>
+<td><code>aluminum.detect</code></td>
 <td>HTTP probing + live model listing</td>
 </tr>
 <tr>
-<td><code>alum.gateway</code></td>
+<td><code>aluminum.gateway</code></td>
 <td><code>config.jsonc</code> builder, writer, launcher</td>
 </tr>
 <tr>
-<td><code>alum.ports</code></td>
+<td><code>aluminum.ports</code></td>
 <td>port resolution (explicit flag &gt; <code>ALUM_*_PORT</code> env &gt; placeholder)</td>
 </tr>
 <tr>
-<td><code>alum.config</code></td>
+<td><code>aluminum.config</code></td>
 <td>shared constants (<code>mesh_base_url</code>)</td>
 </tr>
 <tr>
-<td><code>alum.cli</code></td>
+<td><code>aluminum.cli</code></td>
 <td><code>doctor / setup / serve / status / models / show</code></td>
 </tr>
 </tbody>
 </table>
 <h2 id="port-conventions">Port conventions</h2>
 <p>Backend defaults are <strong>placeholders, not real ports</strong> — set yours via
-<code>alum setup</code> prompts, <code>--argo-port/--alcf-port/--asksage-port/--ollama-port</code>
+<code>aluminum setup</code> prompts, <code>--argo-port/--alcf-port/--asksage-port/--ollama-port</code>
 flags, or <code>ALUM_ARGO_PORT</code> / <code>ALUM_ALCF_PORT</code> / <code>ALUM_ASKSAGE_PORT</code> /
 <code>ALUM_OLLAMA_PORT</code> env vars.</p>
 <table>
@@ -794,7 +794,7 @@ flags, or <code>ALUM_ARGO_PORT</code> / <code>ALUM_ALCF_PORT</code> / <code>ALUM
 <td><code>ALUM_ASKSAGE_PORT</code></td>
 </tr>
 <tr>
-<td><strong>ALUM mesh</strong></td>
+<td><strong>ALUMINUM mesh</strong></td>
 <td><strong>46701</strong></td>
 <td><code>ALUM_PORT</code> / <code>--port</code></td>
 </tr>
