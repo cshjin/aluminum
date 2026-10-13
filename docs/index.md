@@ -4,6 +4,12 @@
   <img src="assets/ALUMINUM_logo.png" alt="ALUMINUM logo" width="480">
 </p>
 
+<p align="center">
+  <a href="https://github.com/cshjin/aluminum"><img src="https://img.shields.io/badge/version-0.1.0-blue" alt="version"></a>
+  <a href="https://www.python.org/"><img src="https://img.shields.io/badge/python-3.10+-blue" alt="python"></a>
+  <a href="https://github.com/cshjin/aluminum/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-green" alt="license"></a>
+</p>
+
 ALUMINUM aggregates **Argo**, **ALCF**, **AskSage**, and local **Ollama**
 (including Ollama cloud models) behind one OpenAI-compatible endpoint.
 
