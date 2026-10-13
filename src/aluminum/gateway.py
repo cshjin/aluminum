@@ -34,7 +34,7 @@ def build_config(
     - ``models``: mapping of ``mesh_name -> upstream_model``.
     - ``backend_ports``: key -> local proxy port (env/placeholder defaults apply).
     """
-    ports = backend_ports or resolve_all()
+    ports = resolve_all(backend_ports or {})
     providers: dict = {}
     for key in provider_keys:
         providers.update(REGISTRY[key].provider_block(ports[key]))

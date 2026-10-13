@@ -117,5 +117,5 @@ def mesh_name(provider_key: str, upstream_model: str) -> str:
         "asksage": "asksage",
         "ollama": "ollama",
     }[provider_key]
-    short = upstream_model.replace("argo:", "").replace("/", "-").replace(":", "-")
+    short = upstream_model.replace("argo:", "").replace("/", "-")
     return f"{prefix}:{short}"
