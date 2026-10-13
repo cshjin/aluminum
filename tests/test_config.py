@@ -6,7 +6,7 @@ from aluminum.gateway import build_config, default_models_for, infer_provider, r
 
 def test_mesh_name_prefixes():
     assert mesh_name("alcf", "gpt-oss-120b") == "alcf:gpt-oss-120b"
-    assert mesh_name("ollama", "gpt-oss:120b-cloud") == "ollama:gpt-oss-120b-cloud"
+    assert mesh_name("ollama", "gpt-oss:120b-cloud") == "ollama:gpt-oss:120b-cloud"
     assert mesh_name("asksage", "google-claude-sonnet-5") == "asksage:google-claude-sonnet-5"
 
 

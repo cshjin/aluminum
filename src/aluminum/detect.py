@@ -176,6 +176,12 @@ def ensure_ollama(port: int | None = None, timeout: float = 30.0) -> bool:
     if not exe:
         return False
     log = Path("/tmp") / "aluminum-ollama-serve.log"
+    # Rotate if > 10MB to avoid unbounded growth
+    try:
+        if log.exists() and log.stat().st_size > 10 * 1024 * 1024:
+            log.rename(log.with_suffix(".log.1"))
+    except OSError:
+        pass
     with log.open("ab") as fh:
         subprocess.Popen(
             [exe, "serve"], stdout=fh, stderr=subprocess.STDOUT, start_new_session=True

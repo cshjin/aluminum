@@ -117,5 +117,8 @@ def mesh_name(provider_key: str, upstream_model: str) -> str:
         "asksage": "asksage",
         "ollama": "ollama",
     }[provider_key]
-    short = upstream_model.replace("argo:", "").replace("/", "-")
+    short = upstream_model.replace("/", "-")
+    # Remove argo-specific upstream prefix only for argo backend.
+    if provider_key == "argo" and upstream_model.startswith("argo:"):
+        short = upstream_model[len("argo:"):].replace("/", "-")
     return f"{prefix}:{short}"
