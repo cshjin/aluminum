@@ -13,7 +13,9 @@ aluminum version
 
 Backend ports resolve as: CLI flag > `ALUM_ARGO_PORT` / `ALUM_ALCF_PORT` /
 `ALUM_ASKSAGE_PORT` / `ALUM_OLLAMA_PORT` env vars > built-in placeholders
-(8101–8104). The mesh port resolves as: `--port` > `ALUM_PORT` > 46701.
+(8101–8104). Setup, status, and models resolve the mesh port as: `--port` >
+`ALUM_PORT` > 46701. Serve preserves the port in its config unless `--port`
+is supplied.
 
 ## doctor
 

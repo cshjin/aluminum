@@ -49,6 +49,39 @@ def test_resolve_order_explicit_env_default(monkeypatch):
     assert resolve("argo") == 8101
 
 
+def test_setup_port_uses_gateway_environment_override(monkeypatch):
+    from aluminum.cli import _pick_port
+
+    monkeypatch.setenv("ALUM_PORT", "12345")
+    assert _pick_port(None, yes=True) == 12345
+    assert _pick_port(23456, yes=True) == 23456
+
+
+def test_serve_preserves_port_from_config_without_override(monkeypatch, tmp_path):
+    from click.testing import CliRunner
+
+    from aluminum import cli as cli_module
+    from aluminum.cli import cli
+
+    config = tmp_path / "config.jsonc"
+    config.write_text("{}")
+    started = {}
+
+    class Process:
+        def wait(self):
+            pass
+
+    def fake_launch(path, host=None, port=None):
+        started.update(path=path, host=host, port=port)
+        return Process()
+
+    monkeypatch.setattr(cli_module, "launch_gateway", fake_launch)
+    result = CliRunner().invoke(cli, ["serve", "--config", str(config), "--no-banner"])
+
+    assert result.exit_code == 0, result.output
+    assert started["port"] is None
+
+
 def test_default_models_use_curated_fallbacks():
     models = default_models_for(["asksage"])
     assert models

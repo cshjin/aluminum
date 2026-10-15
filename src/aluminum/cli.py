@@ -28,7 +28,7 @@ from aluminum.gateway import (
     launch_gateway,
     write_config,
 )
-from aluminum.ports import GATEWAY_DEFAULT_PORT, resolve, resolve_all
+from aluminum.ports import resolve, resolve_all
 
 console = Console()
 
