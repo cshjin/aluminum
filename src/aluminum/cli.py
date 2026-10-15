@@ -132,13 +132,14 @@ def _multiselect(prompt_text: str, choices: list[str], defaults: list[str]) -> l
     return picked or [c for c in choices if c in defaults]
 
 
-def _pick_port(cli_port: int | None, yes: bool, default: int = GATEWAY_DEFAULT_PORT) -> int:
+def _pick_port(cli_port: int | None, yes: bool) -> int:
     """Step 0 of setup: choose the mesh gateway port."""
     if cli_port is not None:
         if not 1 <= cli_port <= 65535:
             console.print(f"[red]Invalid port {cli_port}: must be 1-65535.[/red]")
             sys.exit(2)
         return cli_port
+    default = resolve("gateway")
     if yes:
         return default
     while True:
@@ -289,9 +290,9 @@ def setup(
 @cli.command()
 @click.option("--config", "-c", default=None)
 @click.option("--host", default="127.0.0.1")
-@click.option("--port", default=GATEWAY_DEFAULT_PORT)
+@click.option("--port", default=None, type=int)
 @click.option("--no-banner", is_flag=True, help="Suppress the startup banner.")
-def serve(config: str | None, host: str, port: int, no_banner: bool) -> None:
+def serve(config: str | None, host: str, port: int | None, no_banner: bool) -> None:
     """Launch llm-rosetta-gateway with the aluminum-generated config."""
     if not no_banner:
         print_banner()
@@ -310,9 +311,10 @@ def serve(config: str | None, host: str, port: int, no_banner: bool) -> None:
 
 @cli.command()
 @click.option("--host", default="127.0.0.1")
-@click.option("--port", default=GATEWAY_DEFAULT_PORT)
-def status(host: str, port: int) -> None:
+@click.option("--port", default=None, type=int)
+def status(host: str, port: int | None) -> None:
     """Show mesh health + per-provider stats."""
+    port = resolve("gateway", port)
     gw = probe_gateway(host=host, port=port)
     if not gw["alive"]:
         console.print(f"[red]Gateway down at {mesh_base_url(host, port)} ({gw['detail']})[/red]")
@@ -342,10 +344,11 @@ def status(host: str, port: int) -> None:
 
 @cli.command("models")
 @click.option("--host", default="127.0.0.1")
-@click.option("--port", default=GATEWAY_DEFAULT_PORT)
+@click.option("--port", default=None, type=int)
 @click.option("--json", "as_json", is_flag=True, help="Print raw JSON.")
-def list_models(host: str, port: int, as_json: bool) -> None:
+def list_models(host: str, port: int | None, as_json: bool) -> None:
     """List unified models served through the mesh."""
+    port = resolve("gateway", port)
     url = mesh_base_url(host, port) + "/v1/models"
     try:
         r = httpx.get(url, timeout=10.0)

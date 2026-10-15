@@ -4,9 +4,9 @@
 aluminum --help
 aluminum doctor [--timeout 5.0] [--argo-port N] [--alcf-port N] [--asksage-port N] [--ollama-port N]
 aluminum setup [-c CONFIG] [--host 127.0.0.1] [--port 46701] [--argo-port N] [--alcf-port N] [--asksage-port N] [--ollama-port N] [--yes] [--no-banner]
-aluminum serve [-c CONFIG] [--host 127.0.0.1] [--port 46701] [--no-banner]
-aluminum status [--host 127.0.0.1] [--port 46701]
-aluminum models [--host 127.0.0.1] [--port 46701] [--json]
+aluminum serve [-c CONFIG] [--host 127.0.0.1] [--port N] [--no-banner]
+aluminum status [--host 127.0.0.1] [--port N]
+aluminum models [--host 127.0.0.1] [--port N] [--json]
 aluminum show [-c CONFIG]
 aluminum version
 ```
@@ -34,7 +34,8 @@ not a TTY (pipes, CI), selection falls back to numbered input.
 ## serve
 
 Execs `llm-rosetta-gateway --config <path> [--host …] [--port …]` in the
-foreground. Run it under `tmux`, `screen`, or systemd for persistence
+foreground. Without `--port`, the configured port is preserved; the option
+overrides it. Run it under `tmux`, `screen`, or systemd for persistence
 (see Operations). Upstream proxies must already be running.
 
 ## status / models

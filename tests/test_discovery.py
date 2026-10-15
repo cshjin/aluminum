@@ -58,14 +58,20 @@ def test_argo_prefers_local_proxy_ids(monkeypatch):
     assert not any("apps.inside" in c for c in calls)
 
 
-def test_argo_falls_back_to_prod_url(monkeypatch):
+def test_argo_uses_curated_ids_when_local_proxy_is_down(monkeypatch):
     def fake_get(url, timeout=None):
         if "127.0.0.1" in url:
             raise httpx.ConnectError("down")
-        return _Resp({"data": [{"id": "Claude Opus 5"}]})
+        raise AssertionError("Argo discovery should not use the unroutable production catalogue")
 
     monkeypatch.setattr(httpx, "get", fake_get)
-    assert fetch_upstream_models("argo") == ["Claude Opus 5"]
+    assert fetch_upstream_models("argo") == [
+        "argo:claude-opus-5",
+        "argo:claude-sonnet-5",
+        "argo:gpt-5.6-luna",
+        "argo:gpt-5.6-sol",
+        "argo:gpt-5.6-terra",
+    ]
 
 
 def test_alcf_cli_output_strips_cluster_prefix(monkeypatch, tmp_path):

@@ -5,19 +5,17 @@ through the local proxy. Fallback order per backend:
 
 | Backend | 1st: local proxy | 2nd fallback | 3rd: curated |
 |---|---|---|---|
-| Argo | `:8101/v1/models` | prod `https://apps.inside.anl.gov/argoapi/v1/models` (public, no auth) | ✅ |
+| Argo | `:8101/v1/models` | — | ✅ |
 | ALCF | `:8102/v1/models` | `alcf-proxy models --json` (owns Globus auth; see [inference-endpoints docs](https://docs.alcf.anl.gov/services/inference-endpoints)) | ✅ |
 | AskSage | `:8103/v1/models` | cached `~/.config/asksage_proxy/available_models.json` ([API docs](https://docs.asksage.ai/api-documentation/)) | ✅ |
 | Ollama | `:8104/api/tags` | auto-start `ollama serve` if down, then re-check | ✅ |
 
 !!! warning "Argo prod vs local ids differ"
 
-    The prod catalogue uses display-style ids (`Claude Opus 5`) while the
-    local dev proxy serves routable ids (`argo:claude-opus-5`) — zero overlap
-    (37 vs 57 entries, verified 2026-10-06). The wizard therefore lists the
-    **local** proxy first; the prod URL is only a fallback when the proxy is
-    down. If you switch `argo-proxy` to the prod environment, re-run
-    `aluminum setup` to pick up the new ids.
+    The production catalogue uses display-style ids (`Claude Opus 5`) while
+    the local proxy serves routable ids (`argo:claude-opus-5`). When the local
+    proxy is unavailable, the wizard uses curated local IDs rather than
+    offering production catalogue IDs that may not route through the proxy.
 
 ## Argo (`argo-proxy`)
 
