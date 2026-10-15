@@ -29,8 +29,8 @@ Use Conventional Commit subjects, for example:
 
 Pull request titles are checked by CI and must use one of these types:
 `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`,
-`chore`, or `revert`. An optional lowercase scope is supported.
-Dependabot-authored pull requests are exempt from this title check.
+`chore`, or `revert`. An optional lowercase scope is supported. Dependabot
+pull requests are exempt because their titles are generated automatically.
 
 ## Pull requests
 
