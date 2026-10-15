@@ -58,14 +58,50 @@ def test_argo_prefers_local_proxy_ids(monkeypatch):
     assert not any("apps.inside" in c for c in calls)
 
 
-def test_argo_falls_back_to_prod_url(monkeypatch):
+def test_argo_uses_curated_ids_when_local_proxy_is_down(monkeypatch):
+    calls = []
+
     def fake_get(url, timeout=None):
+        calls.append(url)
         if "127.0.0.1" in url:
             raise httpx.ConnectError("down")
         return _Resp({"data": [{"id": "Claude Opus 5"}]})
 
     monkeypatch.setattr(httpx, "get", fake_get)
-    assert fetch_upstream_models("argo") == ["Claude Opus 5"]
+    assert fetch_upstream_models("argo") == [
+        "argo:claude-opus-5",
+        "argo:claude-sonnet-5",
+        "argo:gpt-5.6-sol",
+        "argo:gpt-5.6-terra",
+        "argo:gpt-5.6-luna",
+    ]
+    assert all("127.0.0.1" in url for url in calls)
+
+
+def test_ensure_ollama_uses_configured_port_and_rotates_log(monkeypatch, tmp_path):
+    import subprocess
+
+    monkeypatch.setattr(detect.shutil, "which", lambda _: "/usr/bin/ollama")
+    monkeypatch.setattr(detect, "user_log_dir", lambda _: str(tmp_path))
+    (tmp_path / "ollama-serve.log").write_bytes(b"x" * (10 * 1024 * 1024 + 1))
+    (tmp_path / "ollama-serve.log.1").write_text("old backup")
+
+    probes = iter([(False, "down"), (True, "up")])
+    monkeypatch.setattr(detect, "probe_port", lambda *args, **kwargs: next(probes))
+    monkeypatch.setattr(detect.time, "sleep", lambda _: None)
+    started = {}
+
+    def fake_popen(command, **kwargs):
+        started["command"] = command
+        started["env"] = kwargs["env"]
+
+    monkeypatch.setattr(subprocess, "Popen", fake_popen)
+
+    assert detect.ensure_ollama(port=12345, timeout=2)
+    assert started["command"] == ["/usr/bin/ollama", "serve"]
+    assert started["env"]["OLLAMA_HOST"] == "127.0.0.1:12345"
+    assert (tmp_path / "ollama-serve.log.1").stat().st_size > 10 * 1024 * 1024
+    assert (tmp_path / "ollama-serve.log").read_bytes() == b""
 
 
 def test_alcf_cli_output_strips_cluster_prefix(monkeypatch, tmp_path):
