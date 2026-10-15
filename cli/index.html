@@ -735,15 +735,17 @@
 <div class="highlight"><pre><span></span><code>aluminum --help
 aluminum doctor [--timeout 5.0] [--argo-port N] [--alcf-port N] [--asksage-port N] [--ollama-port N]
 aluminum setup [-c CONFIG] [--host 127.0.0.1] [--port 46701] [--argo-port N] [--alcf-port N] [--asksage-port N] [--ollama-port N] [--yes] [--no-banner]
-aluminum serve [-c CONFIG] [--host 127.0.0.1] [--port 46701] [--no-banner]
-aluminum status [--host 127.0.0.1] [--port 46701]
-aluminum models [--host 127.0.0.1] [--port 46701] [--json]
+aluminum serve [-c CONFIG] [--host 127.0.0.1] [--port N] [--no-banner]
+aluminum status [--host 127.0.0.1] [--port N]
+aluminum models [--host 127.0.0.1] [--port N] [--json]
 aluminum show [-c CONFIG]
 aluminum version
 </code></pre></div>
 <p>Backend ports resolve as: CLI flag &gt; <code>ALUM_ARGO_PORT</code> / <code>ALUM_ALCF_PORT</code> /
 <code>ALUM_ASKSAGE_PORT</code> / <code>ALUM_OLLAMA_PORT</code> env vars &gt; built-in placeholders
-(8101–8104). The mesh port resolves as: <code>--port</code> &gt; <code>ALUM_PORT</code> &gt; 46701.</p>
+(8101–8104). Setup, status, and models resolve the mesh port as: <code>--port</code> &gt;
+<code>ALUM_PORT</code> &gt; 46701. Serve preserves the port in its config unless <code>--port</code>
+is supplied.</p>
 <h2 id="doctor">doctor</h2>
 <p>Probe every registered backend plus the mesh gateway. Exit code is always 0;
 read the ✅/❌ table.</p>
@@ -758,7 +760,8 @@ default). The final step asks for confirmation before overwriting. Writes
 not a TTY (pipes, CI), selection falls back to numbered input.</p>
 <h2 id="serve">serve</h2>
 <p>Execs <code>llm-rosetta-gateway --config &lt;path&gt; [--host …] [--port …]</code> in the
-foreground. Run it under <code>tmux</code>, <code>screen</code>, or systemd for persistence
+foreground. Without <code>--port</code>, the configured port is preserved; the option
+overrides it. Run it under <code>tmux</code>, <code>screen</code>, or systemd for persistence
 (see Operations). Upstream proxies must already be running.</p>
 <h2 id="status-models">status / models</h2>
 <p><code>status</code> prints gateway uptime, request counters and per-provider success
