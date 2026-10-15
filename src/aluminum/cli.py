@@ -4,16 +4,18 @@ from __future__ import annotations
 
 import json
 import sys
+from pathlib import Path
 
 import click
 import httpx
+import yaml
 from rich.console import Console
 from rich.table import Table
 
-from aluminum import __version__
+from aluminum import __version__, litellm_gateway
 from aluminum.backends import CURATED_MODELS, REGISTRY, mesh_name
 from aluminum.banner import print_banner
-from aluminum.config import mesh_base_url
+from aluminum.config import gateway_request_url, mesh_base_url
 from aluminum.detect import (
     ensure_ollama,
     fetch_upstream_models,
@@ -64,15 +66,28 @@ def _backend_port_options(fn):
     return fn
 
 
+def _gateway_option(fn):
+    return click.option(
+        "--gateway", type=click.Choice(["rosetta", "litellm"]), default="rosetta",
+        show_default=True, help="Gateway implementation.",
+    )(fn)
+
+
+def _config_path(config: str | None, gateway: str):
+    return litellm_gateway.config_path(config) if gateway == "litellm" else config_path(config)
+
+
 @cli.command()
 @click.option("--timeout", default=5.0, help="Probe timeout in seconds.")
 @_backend_port_options
+@_gateway_option
 def doctor(
     timeout: float,
     argo_port: int | None,
     alcf_port: int | None,
     asksage_port: int | None,
     ollama_port: int | None,
+    gateway: str,
 ) -> None:
     """Probe local backends and the mesh gateway."""
     ports = {"argo": argo_port, "alcf": alcf_port, "asksage": asksage_port, "ollama": ollama_port}
@@ -88,7 +103,7 @@ def doctor(
             "✅ up" if row["alive"] else "❌ down",
             row["detail"],
         )
-    gw = probe_gateway(timeout=timeout)
+    gw = probe_gateway(timeout=timeout, gateway=gateway)
     table.add_row(
         "mesh gateway",
         f"127.0.0.1:{resolve('gateway')}",
@@ -207,6 +222,12 @@ def _pick_backend_ports(
     "--yes", "-y", is_flag=True, help="Non-interactive: use live backends + curated models."
 )
 @click.option("--no-banner", is_flag=True, help="Suppress the startup banner.")
+@_gateway_option
+@click.option("--otel", is_flag=True, help="Enable LiteLLM OpenTelemetry (install aluminum[otel]).")
+@click.option(
+    "--pricing", type=click.Path(exists=True, dir_okay=False),
+    help="LiteLLM YAML mapping of mesh model names to input/output USD/token rates.",
+)
 def setup(
     config: str | None,
     host: str,
@@ -217,8 +238,13 @@ def setup(
     ollama_port: int | None,
     yes: bool,
     no_banner: bool,
+    gateway: str,
+    otel: bool,
+    pricing: str | None,
 ) -> None:
     """Interactive wizard: choose services, choose models, write gateway config."""
+    if gateway != "litellm" and (otel or pricing):
+        raise click.UsageError("--otel and --pricing require --gateway litellm")
     if not no_banner:
         print_banner()
     console.print("[bold]Step 1/4 — mesh gateway port[/bold]")
@@ -277,13 +303,24 @@ def setup(
             console.print("Aborted — nothing written.")
             return
 
-    cfg = build_config(provider_keys, models, host=host, port=port, backend_ports=backend_ports)
-    path = config_path(config)
-    write_config(cfg, path)
+    path = _config_path(config, gateway)
+    if gateway == "litellm":
+        try:
+            rates = yaml.safe_load(Path(pricing).read_text()) if pricing else None
+            cfg = litellm_gateway.build_config(
+                provider_keys, models, backend_ports=backend_ports, pricing=rates, otel=otel
+            )
+        except (OSError, ValueError, yaml.YAMLError) as exc:
+            raise click.ClickException(str(exc)) from exc
+        litellm_gateway.write_config(cfg, path)
+    else:
+        cfg = build_config(provider_keys, models, host=host, port=port, backend_ports=backend_ports)
+        write_config(cfg, path)
     console.print(f"\n✅ Wrote gateway config to [bold]{path}[/bold]")
     console.print(f"   Providers: {', '.join(provider_keys)}  |  Models: {len(models)}")
     console.print(
-        f"   Next: [bold]aluminum serve[/bold]  (serves on {mesh_base_url(host, port)}/v1)"
+        f"   Next: [bold]aluminum serve --gateway {gateway} --host {host} --port {port}[/bold]"
+        f"  (serves on {mesh_base_url(host, port)}/v1)"
     )
 
 
@@ -292,35 +329,51 @@ def setup(
 @click.option("--host", default="127.0.0.1")
 @click.option("--port", default=None, type=int)
 @click.option("--no-banner", is_flag=True, help="Suppress the startup banner.")
-def serve(config: str | None, host: str, port: int | None, no_banner: bool) -> None:
-    """Launch llm-rosetta-gateway with the aluminum-generated config."""
+@_gateway_option
+def serve(config: str | None, host: str, port: int | None, no_banner: bool, gateway: str) -> None:
+    """Launch the selected gateway with the aluminum-generated config."""
     if not no_banner:
         print_banner()
-    path = config_path(config)
+    path = _config_path(config, gateway)
     if not path.exists():
         console.print(f"[red]No config at {path}. Run `aluminum setup` first.[/red]")
         sys.exit(1)
+    if gateway == "litellm":
+        port = resolve("gateway", port)
     endpoint = f" on {mesh_base_url(host, port)}" if port is not None else ""
     console.print(f"Starting mesh gateway{endpoint} (config: {path}) …")
     console.print("[dim]Make sure upstream proxies are running (argo/alcf/asksage/ollama).[/dim]")
-    proc = launch_gateway(path, host=host, port=port)
+    launcher = litellm_gateway.launch_gateway if gateway == "litellm" else launch_gateway
+    try:
+        proc = launcher(path, host=host, port=port)
+    except (OSError, ValueError, yaml.YAMLError) as exc:
+        raise click.ClickException(str(exc)) from exc
     try:
         proc.wait()
     except KeyboardInterrupt:
         proc.terminate()
+        proc.wait()
+    else:
+        if proc.returncode:
+            raise click.exceptions.Exit(proc.returncode)
 
 
 @cli.command()
 @click.option("--host", default="127.0.0.1")
 @click.option("--port", default=None, type=int)
-def status(host: str, port: int | None) -> None:
+@_gateway_option
+@click.option("--scheme", type=click.Choice(["http", "https"]), default="http", show_default=True)
+def status(host: str, port: int | None, gateway: str, scheme: str) -> None:
     """Show mesh health + per-provider stats."""
     port = resolve("gateway", port)
-    gw = probe_gateway(host=host, port=port)
+    gw = probe_gateway(host=host, port=port, gateway=gateway, scheme=scheme)
     if not gw["alive"]:
-        console.print(f"[red]Gateway down at {mesh_base_url(host, port)} ({gw['detail']})[/red]")
+        console.print(f"[red]Gateway unavailable ({gw['detail']})[/red]")
         sys.exit(1)
     health = gw.get("health", {}) or {}
+    if gateway == "litellm":
+        console.print("✅ LiteLLM up — request statistics require an observability backend.")
+        return
     console.print(
         f"✅ Mesh up — uptime {health.get('uptime_seconds', '?')}s, "
         f"requests {health.get('requests_total', '?')}, "
@@ -347,16 +400,20 @@ def status(host: str, port: int | None) -> None:
 @click.option("--host", default="127.0.0.1")
 @click.option("--port", default=None, type=int)
 @click.option("--json", "as_json", is_flag=True, help="Print raw JSON.")
-def list_models(host: str, port: int | None, as_json: bool) -> None:
+@_gateway_option
+@click.option("--scheme", type=click.Choice(["http", "https"]), default="http", show_default=True)
+def list_models(host: str, port: int | None, as_json: bool, gateway: str, scheme: str) -> None:
     """List unified models served through the mesh."""
     port = resolve("gateway", port)
-    url = mesh_base_url(host, port) + "/v1/models"
     try:
-        r = httpx.get(url, timeout=10.0)
+        headers = litellm_gateway.request_headers() if gateway == "litellm" else None
+        url = gateway_request_url(host, port, scheme, headers) + "/v1/models"
+        kwargs = {"headers": headers} if headers is not None else {}
+        r = httpx.get(url, timeout=10.0, **kwargs)
         r.raise_for_status()
         data = r.json()
     except Exception as e:  # noqa: BLE001
-        console.print(f"[red]Failed to reach {url}: {e}[/red]")
+        console.print(f"[red]Failed to list gateway models: {e}[/red]")
         sys.exit(1)
     if as_json:
         click.echo(json.dumps(data, indent=2))
@@ -372,13 +429,39 @@ def list_models(host: str, port: int | None, as_json: bool) -> None:
 
 @cli.command()
 @click.option("--config", "-c", default=None)
-def show(config: str | None) -> None:
+@_gateway_option
+def show(config: str | None, gateway: str) -> None:
     """Print the current gateway config."""
-    path = config_path(config)
+    path = _config_path(config, gateway)
     if not path.exists():
         console.print(f"[red]No config at {path}. Run `aluminum setup` first.[/red]")
         sys.exit(1)
     click.echo(path.read_text())
+
+
+@cli.command()
+@click.option("--config", "-c", default=None, help="LiteLLM YAML config path.")
+@click.option("--json", "as_json", is_flag=True, help="Print configured USD/token rates as JSON.")
+def costs(config: str | None, as_json: bool) -> None:
+    """Compare explicit LiteLLM prices; missing provider prices remain unknown."""
+    path = litellm_gateway.config_path(config)
+    try:
+        rows = litellm_gateway.cost_rows(yaml.safe_load(path.read_text()))
+    except (OSError, TypeError, ValueError, yaml.YAMLError) as exc:
+        raise click.ClickException(str(exc)) from exc
+    if as_json:
+        click.echo(json.dumps(rows, indent=2))
+        return
+    table = Table(title="Configured prices (USD per million tokens; not billed spend)")
+    for column in ("model", "upstream", "input", "output", "pricing"):
+        table.add_column(column)
+    for row in rows:
+        rates = [
+            "unknown" if row[field] is None else f"{row[field] * 1_000_000:g}"
+            for field in litellm_gateway.COST_FIELDS
+        ]
+        table.add_row(str(row["model"]), str(row["upstream"]), *rates, row["pricing"])
+    console.print(table)
 
 
 @cli.command()

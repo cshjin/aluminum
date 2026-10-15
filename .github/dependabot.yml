@@ -3,14 +3,12 @@ updates:
   - package-ecosystem: pip
     directory: /
     commit-message:
-      prefix: "build"
-      include: "scope"
+      prefix: "build(deps)"
     schedule:
       interval: weekly
   - package-ecosystem: github-actions
     directory: /
     commit-message:
-      prefix: "build"
-      include: "scope"
+      prefix: "ci(deps)"
     schedule:
       interval: weekly
