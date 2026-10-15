@@ -10,6 +10,7 @@ from click.testing import CliRunner
 from aluminum import cli, detect
 from aluminum import litellm_gateway as gateway
 from aluminum.backends import REGISTRY, mesh_name
+from aluminum.config import gateway_request_url, mesh_base_url
 from aluminum.gateway import default_models_for
 
 
@@ -239,3 +240,100 @@ def test_cli_models_authentication(monkeypatch):
     result = CliRunner().invoke(cli.cli, ["models", "--gateway", "litellm", "--json"])
     assert result.exit_code == 0
     assert get.call_args.kwargs["headers"] == {"Authorization": "Bearer " + "test-only-virtual"}
+
+
+@pytest.mark.parametrize("host", ["gateway.example", "192.0.2.1", "::", "0.0.0.0"])
+@pytest.mark.parametrize("key_env", ["ALUM_GATEWAY_API_KEY", "LITELLM_MASTER_KEY"])
+@pytest.mark.parametrize("command", ["models", "status"])
+def test_remote_http_credentials_blocked_before_network(monkeypatch, host, key_env, command):
+    monkeypatch.delenv("ALUM_GATEWAY_API_KEY", raising=False)
+    monkeypatch.delenv("LITELLM_MASTER_KEY", raising=False)
+    monkeypatch.setenv(key_env, "test-only-credential")
+    get = Mock()
+    monkeypatch.setattr(cli.httpx, "get", get)
+    result = CliRunner().invoke(cli.cli, [
+        command, "--gateway", "litellm", "--host", host,
+    ])
+    assert result.exit_code == 1
+    assert "--scheme https" in result.output
+    assert "test-only-credential" not in result.output
+    get.assert_not_called()
+
+
+def test_remote_https_probes_use_tls_for_models_and_health(monkeypatch):
+    monkeypatch.setenv("ALUM_GATEWAY_API_KEY", "test-only-credential")
+    get = Mock(return_value=Mock(status_code=200, json=lambda: {"status": "alive"}))
+    monkeypatch.setattr(detect.httpx, "get", get)
+    result = detect.probe_gateway(
+        gateway="litellm", host="gateway.example", port=8443, scheme="https",
+    )
+    assert result["alive"]
+    assert [call.args[0] for call in get.call_args_list] == [
+        "https://gateway.example:8443/v1/models",
+        "https://gateway.example:8443/health/liveliness",
+    ]
+    for call in get.call_args_list:
+        assert call.kwargs["headers"] == {"Authorization": "Bearer " + "test-only-credential"}
+        assert "verify" not in call.kwargs
+        assert "follow_redirects" not in call.kwargs
+
+
+@pytest.mark.parametrize("command", ["models", "status"])
+def test_remote_https_cli(monkeypatch, command):
+    monkeypatch.setenv("ALUM_GATEWAY_API_KEY", "test-only-credential")
+    get = Mock(return_value=Mock(status_code=200, json=lambda: {"data": []}))
+    monkeypatch.setattr(cli.httpx, "get", get)
+    result = CliRunner().invoke(cli.cli, [
+        command, "--gateway", "litellm", "--host", "gateway.example",
+        "--scheme", "https", "--port", "8443",
+    ])
+    assert result.exit_code == 0, result.output
+    assert all(call.args[0].startswith("https://gateway.example:8443/") for call in get.call_args_list)
+    assert get.call_args.kwargs["headers"] == {"Authorization": "Bearer " + "test-only-credential"}
+
+
+@pytest.mark.parametrize("host,expected", [
+    ("127.0.0.1", "127.0.0.1"), ("127.0.0.2", "127.0.0.2"),
+    ("localhost", "localhost"), ("::1", "[::1]"), ("[::1]", "[::1]"),
+])
+def test_loopback_http_and_ipv6_urls(host, expected):
+    assert gateway_request_url(host, 9999, headers={"Authorization": "test"}) == (
+        f"http://{expected}:9999"
+    )
+
+
+@pytest.mark.parametrize("host", [
+    "127.0.0.1@gateway.example", "localhost/gateway.example", "localhost?remote",
+    "localhost#remote", "http://localhost", "localhost\\remote", "localhost%2fremote",
+    "localhost\n", "",
+])
+def test_reject_host_url_injection(host):
+    with pytest.raises(ValueError):
+        gateway_request_url(host, 9999, headers={"Authorization": "test"})
+
+
+def test_uncredentialed_and_rosetta_remote_http_unchanged(monkeypatch):
+    monkeypatch.delenv("ALUM_GATEWAY_API_KEY", raising=False)
+    monkeypatch.delenv("LITELLM_MASTER_KEY", raising=False)
+    assert mesh_base_url("gateway.example", 9999) == "http://gateway.example:9999"
+    get = Mock(return_value=Mock(status_code=200, json=dict))
+    monkeypatch.setattr(detect.httpx, "get", get)
+    assert detect.probe_gateway(gateway="litellm", host="gateway.example")["alive"]
+    monkeypatch.setenv("LITELLM_MASTER_KEY", "test-only-credential")
+    get.reset_mock()
+    assert detect.probe_gateway(host="gateway.example")["alive"]
+    for call in get.call_args_list:
+        assert "headers" not in call.kwargs
+
+
+def test_tls_verification_failure_has_no_http_fallback(monkeypatch):
+    import httpx
+
+    monkeypatch.setenv("ALUM_GATEWAY_API_KEY", "test-only-credential")
+    get = Mock(side_effect=httpx.ConnectError("certificate verify failed"))
+    monkeypatch.setattr(detect.httpx, "get", get)
+    result = detect.probe_gateway(gateway="litellm", host="gateway.example", scheme="https")
+    assert not result["alive"]
+    assert "certificate verify failed" in result["detail"]
+    assert get.call_count == 1
+    assert get.call_args.args[0].startswith("https://")

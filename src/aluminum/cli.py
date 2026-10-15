@@ -15,7 +15,7 @@ from rich.table import Table
 from aluminum import __version__, litellm_gateway
 from aluminum.backends import CURATED_MODELS, REGISTRY, mesh_name
 from aluminum.banner import print_banner
-from aluminum.config import mesh_base_url
+from aluminum.config import gateway_request_url, mesh_base_url
 from aluminum.detect import (
     ensure_ollama,
     fetch_upstream_models,
@@ -358,11 +358,12 @@ def serve(config: str | None, host: str, port: int, no_banner: bool, gateway: st
 @click.option("--host", default="127.0.0.1")
 @click.option("--port", default=GATEWAY_DEFAULT_PORT)
 @_gateway_option
-def status(host: str, port: int, gateway: str) -> None:
+@click.option("--scheme", type=click.Choice(["http", "https"]), default="http", show_default=True)
+def status(host: str, port: int, gateway: str, scheme: str) -> None:
     """Show mesh health + per-provider stats."""
-    gw = probe_gateway(host=host, port=port, gateway=gateway)
+    gw = probe_gateway(host=host, port=port, gateway=gateway, scheme=scheme)
     if not gw["alive"]:
-        console.print(f"[red]Gateway down at {mesh_base_url(host, port)} ({gw['detail']})[/red]")
+        console.print(f"[red]Gateway unavailable ({gw['detail']})[/red]")
         sys.exit(1)
     health = gw.get("health", {}) or {}
     if gateway == "litellm":
@@ -395,16 +396,18 @@ def status(host: str, port: int, gateway: str) -> None:
 @click.option("--port", default=GATEWAY_DEFAULT_PORT)
 @click.option("--json", "as_json", is_flag=True, help="Print raw JSON.")
 @_gateway_option
-def list_models(host: str, port: int, as_json: bool, gateway: str) -> None:
+@click.option("--scheme", type=click.Choice(["http", "https"]), default="http", show_default=True)
+def list_models(host: str, port: int, as_json: bool, gateway: str, scheme: str) -> None:
     """List unified models served through the mesh."""
-    url = mesh_base_url(host, port) + "/v1/models"
     try:
-        kwargs = {"headers": litellm_gateway.request_headers()} if gateway == "litellm" else {}
+        headers = litellm_gateway.request_headers() if gateway == "litellm" else None
+        url = gateway_request_url(host, port, scheme, headers) + "/v1/models"
+        kwargs = {"headers": headers} if headers is not None else {}
         r = httpx.get(url, timeout=10.0, **kwargs)
         r.raise_for_status()
         data = r.json()
     except Exception as e:  # noqa: BLE001
-        console.print(f"[red]Failed to reach {url}: {e}[/red]")
+        console.print(f"[red]Failed to list gateway models: {e}[/red]")
         sys.exit(1)
     if as_json:
         click.echo(json.dumps(data, indent=2))

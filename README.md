@@ -87,6 +87,20 @@ listing use `ALUM_GATEWAY_API_KEY` if set, otherwise `LITELLM_MASTER_KEY`.
 For production, issue restricted virtual keys rather than distributing the
 master key; LiteLLM virtual-key/budget persistence requires its database setup.
 
+For a remote gateway behind a TLS-terminating reverse proxy, use HTTPS explicitly:
+
+```bash
+aluminum models --gateway litellm --host gateway.example --port 443 --scheme https
+aluminum status --gateway litellm --host gateway.example --port 443 --scheme https
+```
+
+`--host` accepts a hostname or IP address, not a URL. Authenticated requests to
+non-loopback HTTP addresses are refused before any network request; local
+loopback HTTP remains supported. Both model and health probes use the selected
+scheme. HTTPS verifies certificates using the system trust configuration (or
+HTTPX's `SSL_CERT_FILE` / `SSL_CERT_DIR` for your organization's CA); there is no
+insecure TLS bypass or automatic fallback to HTTP.
+
 Argo, ALCF, AskSage, and Ollama retain their exact upstream model IDs and route
 through their existing local OpenAI-compatible proxies. Start those proxies
 separately; ALUMINUM does not replace provider authentication or certificates.

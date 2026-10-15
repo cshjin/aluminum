@@ -52,14 +52,19 @@ def probe_all(ports: dict[str, int | None] | None = None, timeout: float = TIMEO
 def probe_gateway(
     host: str = "127.0.0.1", port: int | None = None, timeout: float = TIMEOUT,
     gateway: str = "rosetta",
+    scheme: str = "http",
 ) -> dict:
-    from aluminum.config import mesh_base_url
+    from aluminum.config import gateway_request_url
     from aluminum.ports import GATEWAY_DEFAULT_PORT
 
     port = port if port is not None else resolve("gateway")
     headers = request_headers() if gateway == "litellm" else None
+    try:
+        base_url = gateway_request_url(host, port or GATEWAY_DEFAULT_PORT, scheme, headers)
+    except ValueError as exc:
+        return {"alive": False, "detail": str(exc), "health": {}}
     alive, detail = probe_url(
-        mesh_base_url(host, port or GATEWAY_DEFAULT_PORT) + "/v1/models",
+        base_url + "/v1/models",
         timeout=timeout, headers=headers,
     )
     health = {}
@@ -67,7 +72,7 @@ def probe_gateway(
         try:
             health_path = "/health/liveliness" if gateway == "litellm" else "/health"
             r = httpx.get(
-                f"http://{host}:{port}{health_path}", timeout=timeout,
+                base_url + health_path, timeout=timeout,
                 **({"headers": headers} if headers is not None else {}),
             )
             if r.status_code == 200:
