@@ -29,6 +29,12 @@ asksage = ["asksage-proxy>=0.2"]
 all = ["aluminum[argo,alcf,asksage]"]
 docs = ["mkdocs>=1.6", "mkdocs-material>=9.0"]
 dev = ["pytest>=8.0", "ruff>=0.5"]
+litellm = ["litellm[proxy]>=1.105.1,<2"]
+otel = [
+  "aluminum[litellm]",
+  "opentelemetry-sdk>=1.33.1,<2",
+  "opentelemetry-exporter-otlp>=1.33.1,<2",
+]
 
 [project.scripts]
 aluminum = "aluminum.cli:main"

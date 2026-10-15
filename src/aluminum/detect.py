@@ -47,7 +47,8 @@ def probe_all(ports: dict[str, int | None] | None = None, timeout: float = TIMEO
 
 
 def probe_gateway(
-    host: str = "127.0.0.1", port: int | None = None, timeout: float = TIMEOUT
+    host: str = "127.0.0.1", port: int | None = None, timeout: float = TIMEOUT,
+    gateway: str = "rosetta",
 ) -> dict:
     from aluminum.config import mesh_base_url
     from aluminum.ports import GATEWAY_DEFAULT_PORT
@@ -59,7 +60,8 @@ def probe_gateway(
     health = {}
     if alive:
         try:
-            r = httpx.get(f"http://{host}:{port}/health", timeout=timeout)
+            health_path = "/health/liveliness" if gateway == "litellm" else "/health"
+            r = httpx.get(f"http://{host}:{port}{health_path}", timeout=timeout)
             if r.status_code == 200:
                 health = r.json()
         except Exception:  # noqa: BLE001 — health is best-effort
