@@ -288,7 +288,10 @@ def test_remote_https_cli(monkeypatch, command):
         "--scheme", "https", "--port", "8443",
     ])
     assert result.exit_code == 0, result.output
-    assert all(call.args[0].startswith("https://gateway.example:8443/") for call in get.call_args_list)
+    expected_urls = ["https://gateway.example:8443/v1/models"]
+    if command == "status":
+        expected_urls.append("https://gateway.example:8443/health/liveliness")
+    assert [call.args[0] for call in get.call_args_list] == expected_urls
     assert get.call_args.kwargs["headers"] == {"Authorization": "Bearer " + "test-only-credential"}
 
 
