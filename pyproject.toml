@@ -17,7 +17,7 @@ dependencies = [
   "pyyaml>=6.0",
   "platformdirs>=4.0",
   "rich>=13.0",
-  "inquirerpy>=0.3",
+  "inquirerpy>=0.3.4",
   "llm-rosetta[gateway]>=0.10",
 ]
 
