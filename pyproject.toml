@@ -28,7 +28,7 @@ alcf = ["alcf-proxy>=0.3.2"]
 asksage = ["asksage-proxy>=0.3.0"]
 all = ["aluminum[argo,alcf,asksage]"]
 docs = ["mkdocs>=1.6.1", "mkdocs-material>=9.0"]
-dev = ["pytest>=8.0", "ruff>=0.5"]
+dev = ["pytest>=8.0", "ruff>=0.17.0"]
 litellm = ["litellm[proxy]>=1.105.1,<2"]
 otel = [
   "aluminum[litellm]",
