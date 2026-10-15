@@ -68,6 +68,12 @@ pip install -e ".[docs]"
 mkdocs serve
 ```
 
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for development checks and commit
+guidelines. Pull requests run lint, tests across supported Python versions,
+package build, and documentation build.
+
 ## Layout
 
 - `src/aluminum/` — CLI + backend registry + gateway config builder
