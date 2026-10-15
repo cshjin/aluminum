@@ -30,7 +30,7 @@ from aluminum.gateway import (
     launch_gateway,
     write_config,
 )
-from aluminum.ports import GATEWAY_DEFAULT_PORT, resolve, resolve_all
+from aluminum.ports import resolve, resolve_all
 
 console = Console()
 
@@ -147,13 +147,14 @@ def _multiselect(prompt_text: str, choices: list[str], defaults: list[str]) -> l
     return picked or [c for c in choices if c in defaults]
 
 
-def _pick_port(cli_port: int | None, yes: bool, default: int = GATEWAY_DEFAULT_PORT) -> int:
+def _pick_port(cli_port: int | None, yes: bool) -> int:
     """Step 0 of setup: choose the mesh gateway port."""
     if cli_port is not None:
         if not 1 <= cli_port <= 65535:
             console.print(f"[red]Invalid port {cli_port}: must be 1-65535.[/red]")
             sys.exit(2)
         return cli_port
+    default = resolve("gateway")
     if yes:
         return default
     while True:
@@ -326,10 +327,10 @@ def setup(
 @cli.command()
 @click.option("--config", "-c", default=None)
 @click.option("--host", default="127.0.0.1")
-@click.option("--port", default=GATEWAY_DEFAULT_PORT)
+@click.option("--port", default=None, type=int)
 @click.option("--no-banner", is_flag=True, help="Suppress the startup banner.")
 @_gateway_option
-def serve(config: str | None, host: str, port: int, no_banner: bool, gateway: str) -> None:
+def serve(config: str | None, host: str, port: int | None, no_banner: bool, gateway: str) -> None:
     """Launch the selected gateway with the aluminum-generated config."""
     if not no_banner:
         print_banner()
@@ -337,7 +338,10 @@ def serve(config: str | None, host: str, port: int, no_banner: bool, gateway: st
     if not path.exists():
         console.print(f"[red]No config at {path}. Run `aluminum setup` first.[/red]")
         sys.exit(1)
-    console.print(f"Starting mesh gateway on {mesh_base_url(host, port)} (config: {path}) …")
+    if gateway == "litellm":
+        port = resolve("gateway", port)
+    endpoint = f" on {mesh_base_url(host, port)}" if port is not None else ""
+    console.print(f"Starting mesh gateway{endpoint} (config: {path}) …")
     console.print("[dim]Make sure upstream proxies are running (argo/alcf/asksage/ollama).[/dim]")
     launcher = litellm_gateway.launch_gateway if gateway == "litellm" else launch_gateway
     try:
@@ -356,11 +360,12 @@ def serve(config: str | None, host: str, port: int, no_banner: bool, gateway: st
 
 @cli.command()
 @click.option("--host", default="127.0.0.1")
-@click.option("--port", default=GATEWAY_DEFAULT_PORT)
+@click.option("--port", default=None, type=int)
 @_gateway_option
 @click.option("--scheme", type=click.Choice(["http", "https"]), default="http", show_default=True)
-def status(host: str, port: int, gateway: str, scheme: str) -> None:
+def status(host: str, port: int | None, gateway: str, scheme: str) -> None:
     """Show mesh health + per-provider stats."""
+    port = resolve("gateway", port)
     gw = probe_gateway(host=host, port=port, gateway=gateway, scheme=scheme)
     if not gw["alive"]:
         console.print(f"[red]Gateway unavailable ({gw['detail']})[/red]")
@@ -393,12 +398,13 @@ def status(host: str, port: int, gateway: str, scheme: str) -> None:
 
 @cli.command("models")
 @click.option("--host", default="127.0.0.1")
-@click.option("--port", default=GATEWAY_DEFAULT_PORT)
+@click.option("--port", default=None, type=int)
 @click.option("--json", "as_json", is_flag=True, help="Print raw JSON.")
 @_gateway_option
 @click.option("--scheme", type=click.Choice(["http", "https"]), default="http", show_default=True)
-def list_models(host: str, port: int, as_json: bool, gateway: str, scheme: str) -> None:
+def list_models(host: str, port: int | None, as_json: bool, gateway: str, scheme: str) -> None:
     """List unified models served through the mesh."""
+    port = resolve("gateway", port)
     try:
         headers = litellm_gateway.request_headers() if gateway == "litellm" else None
         url = gateway_request_url(host, port, scheme, headers) + "/v1/models"

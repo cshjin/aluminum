@@ -4,16 +4,18 @@
 aluminum --help
 aluminum doctor [--timeout 5.0] [--argo-port N] [--alcf-port N] [--asksage-port N] [--ollama-port N]
 aluminum setup [-c CONFIG] [--host 127.0.0.1] [--port 46701] [--argo-port N] [--alcf-port N] [--asksage-port N] [--ollama-port N] [--yes] [--no-banner]
-aluminum serve [-c CONFIG] [--host 127.0.0.1] [--port 46701] [--no-banner]
-aluminum status [--host 127.0.0.1] [--port 46701]
-aluminum models [--host 127.0.0.1] [--port 46701] [--json]
+aluminum serve [-c CONFIG] [--host 127.0.0.1] [--port N] [--no-banner]
+aluminum status [--host 127.0.0.1] [--port N]
+aluminum models [--host 127.0.0.1] [--port N] [--json]
 aluminum show [-c CONFIG]
 aluminum version
 ```
 
 Backend ports resolve as: CLI flag > `ALUM_ARGO_PORT` / `ALUM_ALCF_PORT` /
 `ALUM_ASKSAGE_PORT` / `ALUM_OLLAMA_PORT` env vars > built-in placeholders
-(8101–8104). The mesh port resolves as: `--port` > `ALUM_PORT` > 46701.
+(8101–8104). Setup, status, and models resolve the mesh port as: `--port` >
+`ALUM_PORT` > 46701. Serve preserves the port in its config unless `--port`
+is supplied.
 
 ## doctor
 
@@ -34,7 +36,8 @@ not a TTY (pipes, CI), selection falls back to numbered input.
 ## serve
 
 Execs `llm-rosetta-gateway --config <path> [--host …] [--port …]` in the
-foreground. Run it under `tmux`, `screen`, or systemd for persistence
+foreground. Without `--port`, the configured port is preserved; the option
+overrides it. Run it under `tmux`, `screen`, or systemd for persistence
 (see Operations). Upstream proxies must already be running.
 
 ## status / models

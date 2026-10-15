@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import shutil
 import socket
 import subprocess
@@ -10,7 +11,7 @@ import time
 from pathlib import Path
 
 import httpx
-from platformdirs import user_config_dir
+from platformdirs import user_config_dir, user_log_dir
 
 from aluminum.backends import REGISTRY
 from aluminum.litellm_gateway import request_headers
@@ -190,16 +191,25 @@ def ensure_ollama(port: int | None = None, timeout: float = 30.0) -> bool:
     exe = shutil.which("ollama")
     if not exe:
         return False
-    log = Path("/tmp") / "aluminum-ollama-serve.log"
+    log = Path(user_log_dir("aluminum")) / "ollama-serve.log"
+    log.parent.mkdir(parents=True, exist_ok=True)
     # Rotate if > 10MB to avoid unbounded growth
     try:
         if log.exists() and log.stat().st_size > 10 * 1024 * 1024:
-            log.rename(log.with_suffix(".log.1"))
+            backup = log.with_suffix(".log.1")
+            backup.unlink(missing_ok=True)
+            log.replace(backup)
     except OSError:
         pass
+    env = os.environ.copy()
+    env["OLLAMA_HOST"] = f"127.0.0.1:{port}"
     with log.open("ab") as fh:
         subprocess.Popen(
-            [exe, "serve"], stdout=fh, stderr=subprocess.STDOUT, start_new_session=True
+            [exe, "serve"],
+            stdout=fh,
+            stderr=subprocess.STDOUT,
+            start_new_session=True,
+            env=env,
         )
     deadline = time.time() + timeout
     while time.time() < deadline:
@@ -235,9 +245,6 @@ def fetch_upstream_models(key: str, port: int | None = None, timeout: float = 15
     else:  # argo and future plain OpenAI-compat backends
         data = _fetch_json(local_url, timeout) or {}
         sources.append(_ids_from_openai_models(data))
-        if not sources[-1] and backend.upstream_models_url:
-            upstream = _fetch_json(backend.upstream_models_url, timeout=20.0) or {}
-            sources.append(_ids_from_openai_models(upstream))
 
     for ids in sources:
         if ids:
