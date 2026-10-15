@@ -242,6 +242,30 @@ def test_cli_models_authentication(monkeypatch):
     assert get.call_args.kwargs["headers"] == {"Authorization": "Bearer " + "test-only-virtual"}
 
 
+def test_litellm_serve_resolves_environment_port(tmp_path, monkeypatch):
+    path = tmp_path / "litellm.yaml"
+    path.write_text("{}")
+    monkeypatch.setenv("ALUM_PORT", "23456")
+    launch = Mock(return_value=Mock(returncode=0))
+    monkeypatch.setattr(gateway, "launch_gateway", launch)
+    result = CliRunner().invoke(cli.cli, [
+        "serve", "--gateway", "litellm", "--no-banner", "-c", str(path),
+    ])
+    assert result.exit_code == 0, result.output
+    launch.assert_called_once_with(path, host="127.0.0.1", port=23456)
+
+
+@pytest.mark.parametrize("command", ["models", "status"])
+@pytest.mark.parametrize("gateway_name", ["litellm", "rosetta"])
+def test_gateway_clients_resolve_environment_port(monkeypatch, command, gateway_name):
+    monkeypatch.setenv("ALUM_PORT", "23456")
+    get = Mock(return_value=Mock(status_code=200, json=lambda: {"data": []}))
+    monkeypatch.setattr(cli.httpx, "get", get)
+    result = CliRunner().invoke(cli.cli, [command, "--gateway", gateway_name])
+    assert result.exit_code == 0, result.output
+    assert get.call_args_list[0].args[0] == "http://127.0.0.1:23456/v1/models"
+
+
 @pytest.mark.parametrize("host", ["gateway.example", "192.0.2.1", "::", "0.0.0.0"])
 @pytest.mark.parametrize("key_env", ["ALUM_GATEWAY_API_KEY", "LITELLM_MASTER_KEY"])
 @pytest.mark.parametrize("command", ["models", "status"])
