@@ -79,6 +79,7 @@ def test_serve_preserves_port_from_config_without_override(monkeypatch, tmp_path
     result = CliRunner().invoke(cli, ["serve", "--config", str(config), "--no-banner"])
 
     assert result.exit_code == 0, result.output
+    assert ":None" not in result.output
     assert started["port"] is None
 
 

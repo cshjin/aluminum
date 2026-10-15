@@ -59,10 +59,13 @@ def test_argo_prefers_local_proxy_ids(monkeypatch):
 
 
 def test_argo_uses_curated_ids_when_local_proxy_is_down(monkeypatch):
+    calls = []
+
     def fake_get(url, timeout=None):
+        calls.append(url)
         if "127.0.0.1" in url:
             raise httpx.ConnectError("down")
-        raise AssertionError("Argo discovery should not use the unroutable production catalogue")
+        return _Resp({"data": [{"id": "Claude Opus 5"}]})
 
     monkeypatch.setattr(httpx, "get", fake_get)
     assert fetch_upstream_models("argo") == [
@@ -72,6 +75,7 @@ def test_argo_uses_curated_ids_when_local_proxy_is_down(monkeypatch):
         "argo:gpt-5.6-terra",
         "argo:gpt-5.6-luna",
     ]
+    assert all("127.0.0.1" in url for url in calls)
 
 
 def test_ensure_ollama_uses_configured_port_and_rotates_log(monkeypatch, tmp_path):

@@ -300,7 +300,8 @@ def serve(config: str | None, host: str, port: int | None, no_banner: bool) -> N
     if not path.exists():
         console.print(f"[red]No config at {path}. Run `aluminum setup` first.[/red]")
         sys.exit(1)
-    console.print(f"Starting mesh gateway on {mesh_base_url(host, port)} (config: {path}) …")
+    endpoint = f" on {mesh_base_url(host, port)}" if port is not None else ""
+    console.print(f"Starting mesh gateway{endpoint} (config: {path}) …")
     console.print("[dim]Make sure upstream proxies are running (argo/alcf/asksage/ollama).[/dim]")
     proc = launch_gateway(path, host=host, port=port)
     try:
