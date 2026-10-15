@@ -28,6 +28,7 @@ def test_all_providers_keep_exact_upstream_ids(monkeypatch):
         if provider == "ollama":
             assert ":9104/" in params["api_base"]
     assert config["litellm_settings"] == {"turn_off_message_logging": True}
+    assert config["general_settings"]["master_key"] == "os.environ/LITELLM_MASTER_KEY"
 
 
 def test_prices_are_explicit_and_otel_is_opt_in():
@@ -44,6 +45,17 @@ def test_prices_are_explicit_and_otel_is_opt_in():
     assert rows[1]["pricing"] == "unknown"
     assert rows[1]["input_cost_per_token"] is None
     assert "input_cost_per_token" not in config["model_list"][1]["litellm_params"]
+
+
+def test_native_model_info_pricing_and_conflicts():
+    config = {"model_list": [{
+        "model_name": "native", "litellm_params": {"model": "openai/native"},
+        "model_info": {"input_cost_per_token": 0.000001, "output_cost_per_token": 0.000002},
+    }]}
+    assert gateway.cost_rows(config)[0]["input_cost_per_token"] == 0.000001
+    config["model_list"][0]["litellm_params"]["input_cost_per_token"] = 0
+    with pytest.raises(ValueError, match="Conflicting"):
+        gateway.cost_rows(config)
 
 
 @pytest.mark.parametrize("value", [-1, float("inf"), float("nan"), True, "1", None])
@@ -195,3 +207,35 @@ def test_litellm_health_does_not_trigger_upstream_requests(monkeypatch):
     assert result["alive"] is True
     urls = [call.args[0] for call in get.call_args_list]
     assert urls == ["http://127.0.0.1:9999/v1/models", "http://127.0.0.1:9999/health/liveliness"]
+
+
+def test_gateway_credentials_are_not_sent_to_backends(monkeypatch):
+    monkeypatch.setenv("LITELLM_MASTER_KEY", "test-only-master")
+    monkeypatch.setenv("ALUM_GATEWAY_API_KEY", "test-only-virtual")
+    get = Mock(return_value=Mock(status_code=200, json=dict))
+    monkeypatch.setattr(detect.httpx, "get", get)
+    detect.probe_gateway(gateway="litellm")
+    for call in get.call_args_list:
+        assert call.kwargs["headers"] == {"Authorization": "Bearer " + "test-only-virtual"}
+    get.reset_mock()
+    detect.probe_backend("argo")
+    assert "headers" not in get.call_args.kwargs
+    monkeypatch.delenv("ALUM_GATEWAY_API_KEY")
+    assert gateway.request_headers() == {"Authorization": "Bearer " + "test-only-master"}
+
+
+@pytest.mark.parametrize("status_code", [401, 403, 404, 500])
+def test_litellm_probe_rejects_http_errors(monkeypatch, status_code):
+    get = Mock(return_value=Mock(status_code=status_code))
+    monkeypatch.setattr(detect.httpx, "get", get)
+    assert detect.probe_gateway(gateway="litellm")["alive"] is False
+    assert get.call_count == 1
+
+
+def test_cli_models_authentication(monkeypatch):
+    monkeypatch.setenv("ALUM_GATEWAY_API_KEY", "test-only-virtual")
+    get = Mock(return_value=Mock(json=lambda: {"data": []}))
+    monkeypatch.setattr(cli.httpx, "get", get)
+    result = CliRunner().invoke(cli.cli, ["models", "--gateway", "litellm", "--json"])
+    assert result.exit_code == 0
+    assert get.call_args.kwargs["headers"] == {"Authorization": "Bearer " + "test-only-virtual"}

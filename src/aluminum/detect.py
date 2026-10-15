@@ -13,16 +13,19 @@ import httpx
 from platformdirs import user_config_dir
 
 from aluminum.backends import REGISTRY
+from aluminum.litellm_gateway import request_headers
 from aluminum.ports import resolve
 
 TIMEOUT = 5.0
 
 
-def probe_url(url: str, timeout: float = TIMEOUT) -> tuple[bool, str]:
+def probe_url(
+    url: str, timeout: float = TIMEOUT, headers: dict[str, str] | None = None,
+) -> tuple[bool, str]:
     """Return (alive, detail) for an HTTP endpoint."""
     try:
-        r = httpx.get(url, timeout=timeout)
-        if r.status_code < 500:
+        r = httpx.get(url, timeout=timeout, **({"headers": headers} if headers is not None else {}))
+        if 200 <= r.status_code < (300 if headers is not None else 500):
             return True, f"HTTP {r.status_code}"
         return False, f"HTTP {r.status_code}"
     except Exception as e:  # noqa: BLE001 — report anything as down
@@ -54,14 +57,19 @@ def probe_gateway(
     from aluminum.ports import GATEWAY_DEFAULT_PORT
 
     port = port if port is not None else resolve("gateway")
+    headers = request_headers() if gateway == "litellm" else None
     alive, detail = probe_url(
-        mesh_base_url(host, port or GATEWAY_DEFAULT_PORT) + "/v1/models", timeout=timeout
+        mesh_base_url(host, port or GATEWAY_DEFAULT_PORT) + "/v1/models",
+        timeout=timeout, headers=headers,
     )
     health = {}
     if alive:
         try:
             health_path = "/health/liveliness" if gateway == "litellm" else "/health"
-            r = httpx.get(f"http://{host}:{port}{health_path}", timeout=timeout)
+            r = httpx.get(
+                f"http://{host}:{port}{health_path}", timeout=timeout,
+                **({"headers": headers} if headers is not None else {}),
+            )
             if r.status_code == 200:
                 health = r.json()
         except Exception:  # noqa: BLE001 — health is best-effort

@@ -69,7 +69,17 @@ def build_config(
     settings: dict = {"turn_off_message_logging": True}
     if otel:
         settings["callbacks"] = ["otel"]
-    return {"model_list": entries, "litellm_settings": settings}
+    return {
+        "model_list": entries,
+        "litellm_settings": settings,
+        "general_settings": {"master_key": "os.environ/LITELLM_MASTER_KEY"},
+    }
+
+
+def request_headers() -> dict[str, str]:
+    """Use a virtual key when supplied, or the local gateway's master key."""
+    key = os.environ.get("ALUM_GATEWAY_API_KEY") or os.environ.get("LITELLM_MASTER_KEY")
+    return {"Authorization": "Bearer " + key} if key else {}
 
 
 def write_config(config: dict, path: Path) -> Path:
@@ -88,10 +98,12 @@ def launch_gateway(
 ) -> subprocess.Popen:
     if host not in {"127.0.0.1", "localhost", "::1"}:
         settings = yaml.safe_load(config.read_text()) or {}
+        if not isinstance(settings, dict) or not isinstance(settings.get("general_settings"), dict):
+            raise ValueError("A LiteLLM general_settings.master_key is required")
         key = settings.get("general_settings", {}).get("master_key", "")
         if isinstance(key, str) and key.startswith("os.environ/"):
             key = os.environ.get(key.removeprefix("os.environ/"))
-        if not key:
+        if not isinstance(key, str) or not key.strip():
             raise ValueError("A LiteLLM master_key is required for a non-loopback bind host")
     executable = shutil.which("litellm")
     if executable is None:
@@ -110,7 +122,15 @@ def cost_rows(config: dict) -> list[dict]:
         if not isinstance(entry, dict) or not isinstance(entry.get("litellm_params"), dict):
             raise TypeError("Each model must have litellm_params")
         params = entry["litellm_params"]
-        prices = {field: params[field] for field in COST_FIELDS if field in params}
+        info = entry.get("model_info") or {}
+        if not isinstance(info, dict):
+            raise TypeError("model_info must be a mapping")
+        prices = {}
+        for field in COST_FIELDS:
+            if field in info and field in params and info[field] != params[field]:
+                raise ValueError(f"Conflicting {field} in model_info and litellm_params")
+            if field in params or field in info:
+                prices[field] = params.get(field, info.get(field))
         if prices:
             validate_prices(prices)
         rows.append({

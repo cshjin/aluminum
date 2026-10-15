@@ -342,7 +342,7 @@ def serve(config: str | None, host: str, port: int, no_banner: bool, gateway: st
     launcher = litellm_gateway.launch_gateway if gateway == "litellm" else launch_gateway
     try:
         proc = launcher(path, host=host, port=port)
-    except (OSError, ValueError) as exc:
+    except (OSError, ValueError, yaml.YAMLError) as exc:
         raise click.ClickException(str(exc)) from exc
     try:
         proc.wait()
@@ -394,11 +394,13 @@ def status(host: str, port: int, gateway: str) -> None:
 @click.option("--host", default="127.0.0.1")
 @click.option("--port", default=GATEWAY_DEFAULT_PORT)
 @click.option("--json", "as_json", is_flag=True, help="Print raw JSON.")
-def list_models(host: str, port: int, as_json: bool) -> None:
+@_gateway_option
+def list_models(host: str, port: int, as_json: bool, gateway: str) -> None:
     """List unified models served through the mesh."""
     url = mesh_base_url(host, port) + "/v1/models"
     try:
-        r = httpx.get(url, timeout=10.0)
+        kwargs = {"headers": litellm_gateway.request_headers()} if gateway == "litellm" else {}
+        r = httpx.get(url, timeout=10.0, **kwargs)
         r.raise_for_status()
         data = r.json()
     except Exception as e:  # noqa: BLE001

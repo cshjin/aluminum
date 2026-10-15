@@ -66,10 +66,12 @@ The existing Rosetta gateway remains the default. To use
 
 ```bash
 pip install -e ".[litellm]"           # installed package: pip install "aluminum[litellm]"
+export LITELLM_MASTER_KEY="sk-$(openssl rand -hex 32)"  # keep this secret across restarts
 aluminum setup --gateway litellm
 aluminum serve --gateway litellm
 aluminum doctor --gateway litellm
 aluminum status --gateway litellm
+aluminum models --gateway litellm
 aluminum costs                      # configured rates, including unknown prices
 aluminum costs --json                # machine-readable USD/token rates
 ```
@@ -79,7 +81,11 @@ Setup writes `litellm.yaml` in the platform's ALUMINUM user config directory
 Use `--config /path/to/config.yaml` on setup, serve, show, and costs to override it.
 Pass the same `--host` and `--port` to serve as setup; LiteLLM's YAML does not
 store the listening address. `aluminum models` and OpenAI clients use the same
-`http://127.0.0.1:46701/v1` endpoint with either gateway.
+`http://127.0.0.1:46701/v1` endpoint with either gateway. For LiteLLM, set
+`OPENAI_API_KEY` to your gateway key (not `dummy`). CLI gateway probes and model
+listing use `ALUM_GATEWAY_API_KEY` if set, otherwise `LITELLM_MASTER_KEY`.
+For production, issue restricted virtual keys rather than distributing the
+master key; LiteLLM virtual-key/budget persistence requires its database setup.
 
 Argo, ALCF, AskSage, and Ollama retain their exact upstream model IDs and route
 through their existing local OpenAI-compatible proxies. Start those proxies
@@ -88,7 +94,9 @@ You can also edit `model_list` in the generated YAML to add
 [native LiteLLM providers](https://docs.litellm.ai/docs/providers).
 Keep credentials in environment variables, referencing them as
 `api_key: os.environ/PROVIDER_API_KEY`, rather than writing secrets into YAML.
-The gateway binds to loopback by default without authentication. Before binding
+The LiteLLM gateway binds to loopback by default and reads its master key from
+`LITELLM_MASTER_KEY`; generated YAML contains only the environment reference.
+Keep this variable set in the serve process. Before binding
 to any non-loopback host, configure `general_settings.master_key` using an
 environment reference and set that variable; ALUMINUM refuses an unprotected
 non-loopback launch. Use authenticated clients and TLS for remote access.
@@ -113,8 +121,9 @@ token rates should be zero. These rates become LiteLLM's custom
 `aluminum costs` compares configured rates per million tokens; it does not make
 API calls, estimate missing usage, report actual invoices, or include cache,
 image, subscription, or infrastructure charges. For hand-edited native-provider
-configs it likewise reports only explicit custom rates, not LiteLLM's built-in
-public price catalogue. LiteLLM may otherwise estimate public model prices;
+configs it also reads explicit rates in `model_info`, but not LiteLLM's built-in
+public price catalogue. Conflicting explicit rates are rejected. LiteLLM may
+otherwise estimate public model prices;
 those estimates are not verified prices for your institutional proxy.
 
 Choose a cheaper suitable model explicitly using its mesh name. For equivalent
@@ -128,6 +137,7 @@ automatically route requests to unknown-price providers or claim billing savings
 ```bash
 pip install -e ".[otel]"             # installed package: pip install "aluminum[otel]"
 export OTEL_SERVICE_NAME=aluminum-mesh
+export LITELLM_MASTER_KEY="sk-$(openssl rand -hex 32)"  # or reuse your existing secret
 export OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
 export OTEL_EXPORTER_OTLP_ENDPOINT=http://127.0.0.1:4318
 aluminum setup --gateway litellm --otel
