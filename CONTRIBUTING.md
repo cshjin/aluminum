@@ -28,9 +28,10 @@ Use Conventional Commit subjects, for example:
 - `ci: test supported Python versions`
 
 Human-authored pull request titles are checked by CI and must use one of these
-types: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`,
-`ci`, `chore`, or `revert`. An optional lowercase scope is supported.
-Dependabot-generated pull requests are exempt from this check.
+types:
+`feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`,
+`chore`, or `revert`. An optional lowercase scope is supported. Dependabot
+pull requests are exempt because their titles are generated automatically.
 
 ## Pull requests
 

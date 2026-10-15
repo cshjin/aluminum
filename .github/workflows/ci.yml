@@ -74,6 +74,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Require a Conventional Commit title
+        if: github.event.pull_request.user.login != 'dependabot[bot]'
         env:
           PR_TITLE: ${{ github.event.pull_request.title }}
         run: |

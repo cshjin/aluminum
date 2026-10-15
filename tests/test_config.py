@@ -68,6 +68,8 @@ def test_serve_preserves_port_from_config_without_override(monkeypatch, tmp_path
     started = {}
 
     class Process:
+        returncode = 0
+
         def wait(self):
             pass
 
