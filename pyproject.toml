@@ -25,7 +25,7 @@ dependencies = [
 # Upstream proxies are optional — aluminum works with whichever are installed.
 argo = ["argo-proxy>=3.0"]
 alcf = ["alcf-proxy>=0.2"]
-asksage = ["asksage-proxy>=0.2"]
+asksage = ["asksage-proxy>=0.3.0"]
 all = ["aluminum[argo,alcf,asksage]"]
 docs = ["mkdocs>=1.6", "mkdocs-material>=9.0"]
 dev = ["pytest>=8.0", "ruff>=0.5"]
