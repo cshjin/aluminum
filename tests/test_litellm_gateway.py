@@ -1,6 +1,7 @@
 """Offline LiteLLM config, pricing, and CLI regression tests."""
 
 import json
+from datetime import datetime, timezone
 from unittest.mock import Mock
 
 import pytest
@@ -364,3 +365,40 @@ def test_tls_verification_failure_has_no_http_fallback(monkeypatch):
     assert "certificate verify failed" in result["detail"]
     assert get.call_count == 1
     assert get.call_args.args[0].startswith("https://")
+
+
+def test_default_pricing_free_and_copilot_rates():
+    config = {"model_list": [
+        {"model_name": "argo:claude-opus-5", "litellm_params": {}},
+        {"model_name": "argo:gpt-5-mini", "litellm_params": {}},
+        {"model_name": "alcf:x", "litellm_params": {}},
+        {"model_name": "ollama:y", "litellm_params": {}},
+        {"model_name": "asksage:z", "litellm_params": {}},
+        {"model_name": "argo:unlisted", "litellm_params": {}},
+        {"model_name": "argo:claude-sonnet-5", "litellm_params": {"input_cost_per_token": 1,
+                                                                   "output_cost_per_token": 1}},
+    ]}
+    changed = gateway.apply_default_pricing(config)
+    assert changed == ["argo:claude-opus-5", "argo:gpt-5-mini", "alcf:x", "ollama:y", "asksage:z"]
+    opus, mini, alcf, _, asksage, unlisted, explicit = (e["litellm_params"] for e in config["model_list"])
+    assert opus["input_cost_per_token"] == 5 / 1e6 and opus["cache_creation_input_token_cost"] == 6.25 / 1e6
+    assert "cache_creation_input_token_cost" not in mini
+    assert alcf == {"input_cost_per_token": 0.0, "output_cost_per_token": 0.0}
+    assert asksage["output_cost_per_token"] == 0 and unlisted == {} and explicit["input_cost_per_token"] == 1
+    assert [r["pricing"] for r in gateway.cost_rows(config)].count("unknown") == 1
+
+
+def test_usage_rows_aggregate_cache_and_filter():
+    logs = [
+        {"model_group": "m", "prompt_tokens": 10, "completion_tokens": 2, "spend": 0.5,
+         "startTime": "2026-10-16T02:00:00Z", "status": "success",
+         "metadata": {"usage_object": {"prompt_tokens_details": {
+             "cached_tokens": 4, "cache_creation_tokens": 3}}}},
+        {"model_group": "m", "prompt_tokens": 1, "completion_tokens": 1, "spend": 0.25,
+         "startTime": "2026-10-10T02:00:00Z", "status": "failure", "metadata": None},
+    ]
+    (row,) = gateway.usage_rows(logs)
+    assert row == {"model": "m", "requests": 2, "failed": 1, "input": 11, "output": 3,
+                   "cache_read": 4, "cache_write": 3, "spend": 0.75, "total_tokens": 14}
+    since = datetime(2026, 10, 15, tzinfo=timezone.utc)
+    assert gateway.usage_rows(logs, since)[0]["requests"] == 1

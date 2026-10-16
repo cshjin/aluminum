@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import sys
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import click
@@ -228,6 +229,10 @@ def _pick_backend_ports(
     "--pricing", type=click.Path(exists=True, dir_okay=False),
     help="LiteLLM YAML mapping of mesh model names to input/output USD/token rates.",
 )
+@click.option(
+    "--default-pricing", is_flag=True,
+    help="Price unpriced models: ALCF/AskSage/Ollama free, Argo at GitHub Copilot USD rates.",
+)
 def setup(
     config: str | None,
     host: str,
@@ -241,10 +246,11 @@ def setup(
     gateway: str,
     otel: bool,
     pricing: str | None,
+    default_pricing: bool,
 ) -> None:
     """Interactive wizard: choose services, choose models, write gateway config."""
-    if gateway != "litellm" and (otel or pricing):
-        raise click.UsageError("--otel and --pricing require --gateway litellm")
+    if gateway != "litellm" and (otel or pricing or default_pricing):
+        raise click.UsageError("--otel, --pricing and --default-pricing require --gateway litellm")
     if not no_banner:
         print_banner()
     console.print("[bold]Step 1/4 — mesh gateway port[/bold]")
@@ -312,6 +318,8 @@ def setup(
             )
         except (OSError, ValueError, yaml.YAMLError) as exc:
             raise click.ClickException(str(exc)) from exc
+        if default_pricing:
+            litellm_gateway.apply_default_pricing(cfg)
         litellm_gateway.write_config(cfg, path)
     else:
         cfg = build_config(provider_keys, models, host=host, port=port, backend_ports=backend_ports)
@@ -442,25 +450,81 @@ def show(config: str | None, gateway: str) -> None:
 @cli.command()
 @click.option("--config", "-c", default=None, help="LiteLLM YAML config path.")
 @click.option("--json", "as_json", is_flag=True, help="Print configured USD/token rates as JSON.")
-def costs(config: str | None, as_json: bool) -> None:
+@click.option(
+    "--apply-defaults", is_flag=True,
+    help="Write default rates into the config for unpriced models "
+    "(ALCF/AskSage/Ollama free, Argo at GitHub Copilot USD rates).",
+)
+def costs(config: str | None, as_json: bool, apply_defaults: bool) -> None:
     """Compare explicit LiteLLM prices; missing provider prices remain unknown."""
     path = litellm_gateway.config_path(config)
     try:
-        rows = litellm_gateway.cost_rows(yaml.safe_load(path.read_text()))
+        cfg = yaml.safe_load(path.read_text())
+        if apply_defaults:
+            changed = litellm_gateway.apply_default_pricing(cfg)
+            litellm_gateway.cost_rows(cfg)
+            if changed:
+                litellm_gateway.write_config(cfg, path)
+            console.print(f"Applied default pricing to {len(changed)} model(s); restart the gateway.")
+        rows = litellm_gateway.cost_rows(cfg)
     except (OSError, TypeError, ValueError, yaml.YAMLError) as exc:
         raise click.ClickException(str(exc)) from exc
     if as_json:
         click.echo(json.dumps(rows, indent=2))
         return
     table = Table(title="Configured prices (USD per million tokens; not billed spend)")
-    for column in ("model", "upstream", "input", "output", "pricing"):
+    for column in ("model", "upstream", "input", "output", "cache read", "cache write", "pricing"):
         table.add_column(column)
     for row in rows:
         rates = [
-            "unknown" if row[field] is None else f"{row[field] * 1_000_000:g}"
-            for field in litellm_gateway.COST_FIELDS
+            "-" if row[field] is None else f"{row[field] * 1_000_000:g}"
+            for field in litellm_gateway.ALL_COST_FIELDS
         ]
+        if row["pricing"] == "unknown":
+            rates[0] = rates[1] = "unknown"
         table.add_row(str(row["model"]), str(row["upstream"]), *rates, row["pricing"])
+    console.print(table)
+
+
+@cli.command()
+@click.option("--host", default="127.0.0.1")
+@click.option("--port", default=None, type=int)
+@click.option("--scheme", type=click.Choice(["http", "https"]), default="http", show_default=True)
+@click.option("--days", default=None, type=float, help="Only include the last N days.")
+@click.option("--json", "as_json", is_flag=True, help="Print aggregated usage as JSON.")
+def usage(host: str, port: int | None, scheme: str, days: float | None, as_json: bool) -> None:
+    """Per-model token usage and spend recorded by the LiteLLM gateway (needs its database)."""
+    port = resolve("gateway", port)
+    try:
+        headers = litellm_gateway.request_headers()
+        url = gateway_request_url(host, port, scheme, headers) + "/spend/logs"
+        r = httpx.get(url, headers=headers, timeout=30.0)
+        r.raise_for_status()
+        logs = r.json()
+        since = datetime.now(timezone.utc) - timedelta(days=days) if days else None
+        rows = litellm_gateway.usage_rows(logs, since)
+    except Exception as e:  # noqa: BLE001
+        console.print(f"[red]Failed to read usage: {e}[/red]")
+        sys.exit(1)
+    if as_json:
+        click.echo(json.dumps(rows, indent=2))
+        return
+    table = Table(title="Usage per model (USD from configured rates; unpriced models show $0)")
+    for column in (
+        "model", "requests", "failed", "input", "output", "cache read", "cache write",
+        "total (M)", "spend $",
+    ):
+        table.add_column(
+            column, justify="left" if column == "model" else "right", no_wrap=True, overflow="fold",
+        )
+    total = dict.fromkeys(("requests", "failed", "input", "output", "cache_read", "cache_write", "spend"), 0)
+    for row in rows:
+        for key in total:
+            total[key] += row[key]
+        table.add_row(row["model"], *(f"{row[k]:,}" for k in ("requests", "failed", "input", "output", "cache_read", "cache_write")), f"{row['total_tokens'] / 1e6:.4f}", f"{row['spend']:.6f}")
+    if rows:
+        table.add_section()
+        table.add_row("total", *(f"{total[k]:,}" for k in ("requests", "failed", "input", "output", "cache_read", "cache_write")), f"{(total['input'] + total['output']) / 1e6:.4f}", f"{total['spend']:.6f}")
     console.print(table)
 
 

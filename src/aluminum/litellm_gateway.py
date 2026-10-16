@@ -6,6 +6,7 @@ import math
 import os
 import shutil
 import subprocess
+from datetime import datetime, timezone
 from pathlib import Path
 
 import yaml
@@ -13,8 +14,11 @@ from platformdirs import user_config_dir
 
 from aluminum.backends import REGISTRY
 from aluminum.ports import GATEWAY_DEFAULT_PORT, resolve_all
+from aluminum.pricing import default_rates
 
 COST_FIELDS = ("input_cost_per_token", "output_cost_per_token")
+CACHE_COST_FIELDS = ("cache_read_input_token_cost", "cache_creation_input_token_cost")
+ALL_COST_FIELDS = COST_FIELDS + CACHE_COST_FIELDS
 
 
 def config_path(explicit: str | None = None) -> Path:
@@ -24,9 +28,16 @@ def config_path(explicit: str | None = None) -> Path:
 
 
 def validate_prices(prices: dict) -> dict:
-    """Accept complete USD/token pairs only; absence is unknown, not free."""
-    if not isinstance(prices, dict) or set(prices) != set(COST_FIELDS):
-        raise ValueError(f"Pricing must contain exactly {', '.join(COST_FIELDS)}")
+    """Accept complete USD/token pairs (plus optional cache rates); absence is unknown, not free."""
+    if (
+        not isinstance(prices, dict)
+        or not set(COST_FIELDS) <= set(prices)
+        or set(prices) - set(ALL_COST_FIELDS)
+    ):
+        raise ValueError(
+            f"Pricing must contain {', '.join(COST_FIELDS)} and may add "
+            f"{', '.join(CACHE_COST_FIELDS)}"
+        )
     for value in prices.values():
         if (
             isinstance(value, bool)
@@ -126,7 +137,7 @@ def cost_rows(config: dict) -> list[dict]:
         if not isinstance(info, dict):
             raise TypeError("model_info must be a mapping")
         prices = {}
-        for field in COST_FIELDS:
+        for field in ALL_COST_FIELDS:
             if field in info and field in params and info[field] != params[field]:
                 raise ValueError(f"Conflicting {field} in model_info and litellm_params")
             if field in params or field in info:
@@ -137,6 +148,59 @@ def cost_rows(config: dict) -> list[dict]:
             "model": entry.get("model_name", "?"),
             "upstream": params.get("model", "?"),
             "pricing": "configured" if prices else "unknown",
-            **{field: prices.get(field) for field in COST_FIELDS},
+            **{field: prices.get(field) for field in ALL_COST_FIELDS},
         })
     return rows
+
+
+def apply_default_pricing(config: dict) -> list[str]:
+    """Fill rates for models without explicit ones; return the aliases changed.
+
+    ALCF and Ollama are free. Argo uses GitHub Copilot's published USD/token rates.
+    """
+    changed = []
+    for entry in config.get("model_list", []):
+        params = entry.get("litellm_params", {})
+        info = entry.get("model_info") or {}
+        if any(f in params or f in info for f in COST_FIELDS):
+            continue
+        rates = default_rates(entry.get("model_name", ""))
+        if rates:
+            params.update(rates)
+            changed.append(entry["model_name"])
+    return changed
+
+
+def usage_rows(logs: list[dict], since: datetime | None = None) -> list[dict]:
+    """Aggregate LiteLLM spend logs per mesh model (spend is USD as computed by LiteLLM)."""
+    totals: dict[str, dict] = {}
+    for log in logs:
+        if since is not None:
+            started = datetime.fromisoformat(str(log["startTime"]).replace("Z", "+00:00"))
+            if started.tzinfo is None:
+                started = started.replace(tzinfo=timezone.utc)
+            if started < since:
+                continue
+        metadata = log.get("metadata") if isinstance(log.get("metadata"), dict) else {}
+        usage = metadata.get("usage_object") if isinstance(metadata.get("usage_object"), dict) else {}
+        details = usage.get("prompt_tokens_details") if isinstance(
+            usage.get("prompt_tokens_details"), dict
+        ) else {}
+        row = totals.setdefault(
+            log.get("model_group") or log.get("model") or "?",
+            {"requests": 0, "failed": 0, "input": 0, "output": 0, "cache_read": 0,
+             "cache_write": 0, "spend": 0.0},
+        )
+        row["requests"] += 1
+        row["failed"] += log.get("status") == "failure"
+        row["input"] += log.get("prompt_tokens") or 0
+        row["output"] += log.get("completion_tokens") or 0
+        row["cache_read"] += details.get("cached_tokens") or 0
+        row["cache_write"] += (
+            details.get("cache_creation_tokens") or details.get("cache_write_tokens") or 0
+        )
+        row["spend"] += log.get("spend") or 0.0
+    return [
+        {"model": model, **row, "total_tokens": row["input"] + row["output"]}
+        for model, row in sorted(totals.items())
+    ]

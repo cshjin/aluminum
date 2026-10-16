@@ -129,6 +129,15 @@ alcf:gpt-oss-120b:
   output_cost_per_token: 0.000002
 ```
 
+`cache_read_input_token_cost` and `cache_creation_input_token_cost` may be added
+for models that bill cached tokens.
+
+For a ready-made table, use `aluminum setup --gateway litellm --default-pricing`
+(or `aluminum costs --apply-defaults` on an existing config). It fills only models
+without explicit rates: ALCF, AskSage and Ollama models are priced at $0, and Argo models
+use [GitHub Copilot's published USD per-token rates](https://docs.github.com/en/copilot/reference/copilot-billing/models-and-pricing)
+(default, non-long-context tier, including cache rates). Other providers stay unknown.
+
 Both rates must be finite, non-negative numbers. Only explicitly verified free
 token rates should be zero. These rates become LiteLLM's custom
 `litellm_params.input_cost_per_token` / `output_cost_per_token` values.
@@ -145,6 +154,12 @@ deployments, LiteLLM also supports
 [cost-based routing](https://docs.litellm.ai/docs/routing#cost-based-routing);
 enable it only after verifying prices and model equivalence. ALUMINUM does not
 automatically route requests to unknown-price providers or claim billing savings.
+
+### Usage per model
+
+With the LiteLLM database configured (`DATABASE_URL`), `aluminum usage [--days N] [--json]`
+lists requests, failures, input/output/cache tokens and USD spend per model, using the
+same gateway key as `models`. Spend reflects the configured rates only.
 
 ### OpenTelemetry (opt-in)
 

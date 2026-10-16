@@ -99,7 +99,10 @@ CURATED_MODELS: dict[str, list[str]] = {
     ],
     "alcf": ["inkling-bf16", "nemotron-3-ultra", "gpt-oss-120b"],
     "asksage": ["google-claude-sonnet-5", "gpt-5.6-luna", "gpt-6-luna"],
-    "ollama": ["gpt-oss:120b-cloud", "nemotron-3-ultra:cloud", "qwen3:8b"],
+    "ollama": [
+        "gpt-oss:120b-cloud", "gpt-oss:20b-cloud", "nemotron-3-ultra:cloud",
+        "nemotron-3-super:cloud", "nemotron-3-nano:30b-cloud", "gemma4:31b-cloud",
+    ],
 }
 
 DEFAULT_CAPABILITIES = ["text", "tools", "vision", "reasoning"]
