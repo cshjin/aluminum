@@ -579,6 +579,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#costs-usage-litellm-gateway" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        costs / usage (LiteLLM gateway)
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -711,6 +722,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#costs-usage-litellm-gateway" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        costs / usage (LiteLLM gateway)
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -739,6 +761,8 @@ aluminum serve [-c CONFIG] [--host 127.0.0.1] [--port N] [--no-banner]
 aluminum status [--host 127.0.0.1] [--port N]
 aluminum models [--host 127.0.0.1] [--port N] [--json]
 aluminum show [-c CONFIG]
+aluminum costs [-c CONFIG] [--json] [--apply-defaults]
+aluminum usage [--host 127.0.0.1] [--port N] [--days N] [--json]
 aluminum version
 </code></pre></div>
 <p>Backend ports resolve as: CLI flag &gt; <code>ALUM_ARGO_PORT</code> / <code>ALUM_ALCF_PORT</code> /
@@ -767,6 +791,13 @@ overrides it. Run it under <code>tmux</code>, <code>screen</code>, or systemd fo
 <p><code>status</code> prints gateway uptime, request counters and per-provider success
 rate / latency (from <code>/health</code>). <code>models</code> lists the unified model catalogue
 (from <code>/v1/models</code>); <code>--json</code> dumps raw JSON for scripting.</p>
+<h2 id="costs-usage-litellm-gateway">costs / usage (LiteLLM gateway)</h2>
+<p><code>costs</code> compares configured USD rates per million tokens (input, output, cache
+read, cache write); <code>--apply-defaults</code> fills unpriced models (ALCF, AskSage and
+Ollama free, Argo at GitHub Copilot's USD rates) and writes a <code>.bak</code> first.
+<code>usage</code> aggregates per-model requests, tokens (including cache and total in
+millions) and USD spend from the LiteLLM database; it needs
+<code>LITELLM_MASTER_KEY</code> (or <code>ALUM_GATEWAY_API_KEY</code>) in the environment.</p>
 
 
 
