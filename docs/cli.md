@@ -8,6 +8,8 @@ aluminum serve [-c CONFIG] [--host 127.0.0.1] [--port N] [--no-banner]
 aluminum status [--host 127.0.0.1] [--port N]
 aluminum models [--host 127.0.0.1] [--port N] [--json]
 aluminum show [-c CONFIG]
+aluminum costs [-c CONFIG] [--json] [--apply-defaults]
+aluminum usage [--host 127.0.0.1] [--port N] [--days N] [--json]
 aluminum version
 ```
 
@@ -45,3 +47,12 @@ overrides it. Run it under `tmux`, `screen`, or systemd for persistence
 `status` prints gateway uptime, request counters and per-provider success
 rate / latency (from `/health`). `models` lists the unified model catalogue
 (from `/v1/models`); `--json` dumps raw JSON for scripting.
+
+## costs / usage (LiteLLM gateway)
+
+`costs` compares configured USD rates per million tokens (input, output, cache
+read, cache write); `--apply-defaults` fills unpriced models (ALCF, AskSage and
+Ollama free, Argo at GitHub Copilot's USD rates) and writes a `.bak` first.
+`usage` aggregates per-model requests, tokens (including cache and total in
+millions) and USD spend from the LiteLLM database; it needs
+`LITELLM_MASTER_KEY` (or `ALUM_GATEWAY_API_KEY`) in the environment.

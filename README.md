@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/cshjin/aluminum"><img src="https://img.shields.io/badge/version-0.1.0-blue" alt="version"></a>
+  <a href="https://github.com/cshjin/aluminum"><img src="https://img.shields.io/badge/version-0.2.0-blue" alt="version"></a>
   <a href="https://www.python.org/"><img src="https://img.shields.io/badge/python-3.10+-blue" alt="python"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green" alt="license"></a>
 </p>
@@ -115,39 +115,48 @@ to any non-loopback host, configure `general_settings.master_key` using an
 environment reference and set that variable; ALUMINUM refuses an unprotected
 non-loopback launch. Use authenticated clients and TLS for remote access.
 
-### Pricing and incomplete provider information
+### Pricing
 
-No prices or capabilities are guessed from model names. Missing prices are
-**unknown**, not zero; even local models have infrastructure costs and Ollama
-cloud billing may differ. Supply verified rates with
-`aluminum setup --gateway litellm --pricing /path/to/rates.yaml`, for example:
+Rates are USD **per single token** (`$15 / 1M tokens` = `0.000015`). By default no
+prices are guessed from model names: missing prices are **unknown**, not zero.
+Apply the built-in defaults, or supply your own verified rates:
 
-```yaml
-# Illustrative rates only: replace with your provider's verified USD/token rates.
-alcf:gpt-oss-120b:
-  input_cost_per_token: 0.000001
-  output_cost_per_token: 0.000002
+```bash
+aluminum setup --gateway litellm --default-pricing        # new config
+aluminum costs --apply-defaults                            # existing config (writes a .bak)
+aluminum setup --gateway litellm --pricing rates.yaml      # your own rates
+aluminum costs                                             # compare rates per 1M tokens
 ```
 
-`cache_read_input_token_cost` and `cache_creation_input_token_cost` may be added
-for models that bill cached tokens.
+`--default-pricing` fills only models without explicit rates:
 
-For a ready-made table, use `aluminum setup --gateway litellm --default-pricing`
-(or `aluminum costs --apply-defaults` on an existing config). It fills only models
-without explicit rates: ALCF, AskSage and Ollama models are priced at $0, and Argo models
-use [GitHub Copilot's published USD per-token rates](https://docs.github.com/en/copilot/reference/copilot-billing/models-and-pricing)
-(default, non-long-context tier, including cache rates). Other providers stay unknown.
+| Provider | Default rate |
+| --- | --- |
+| ALCF, AskSage, Ollama | $0 (treated as free) |
+| Argo | [GitHub Copilot's published USD per-token rates](https://docs.github.com/en/copilot/reference/copilot-billing/models-and-pricing), default (non-long-context) tier, including cache read/write |
+| anything else | unknown |
 
-Both rates must be finite, non-negative numbers. Only explicitly verified free
-token rates should be zero. These rates become LiteLLM's custom
-`litellm_params.input_cost_per_token` / `output_cost_per_token` values.
-`aluminum costs` compares configured rates per million tokens; it does not make
-API calls, estimate missing usage, report actual invoices, or include cache,
-image, subscription, or infrastructure charges. For hand-edited native-provider
-configs it also reads explicit rates in `model_info`, but not LiteLLM's built-in
-public price catalogue. Conflicting explicit rates are rejected. LiteLLM may
-otherwise estimate public model prices;
-those estimates are not verified prices for your institutional proxy.
+Custom rates go in a YAML file mapping mesh model names to rates. Input and output
+are required; cache rates are optional for models that bill cached tokens:
+
+```yaml
+argo:claude-opus-5:                      # $5 in / $25 out / $0.50 cache read / $6.25 cache write per 1M
+  input_cost_per_token: 0.000005
+  output_cost_per_token: 0.000025
+  cache_read_input_token_cost: 0.0000005
+  cache_creation_input_token_cost: 0.00000625
+alcf:gpt-oss-120b:                       # explicitly free
+  input_cost_per_token: 0
+  output_cost_per_token: 0
+```
+
+Rates must be finite, non-negative numbers and become LiteLLM's custom
+`litellm_params` cost values. `aluminum costs` only compares configured rates per
+million tokens; it makes no API calls and reports neither invoices nor actual
+usage. For hand-edited native-provider configs it also reads explicit rates in
+`model_info`; conflicting explicit rates are rejected. Without explicit rates,
+LiteLLM may estimate public prices that are not verified for your institutional
+proxy.
 
 Choose a cheaper suitable model explicitly using its mesh name. For equivalent
 deployments, LiteLLM also supports
@@ -157,9 +166,18 @@ automatically route requests to unknown-price providers or claim billing savings
 
 ### Usage per model
 
-With the LiteLLM database configured (`DATABASE_URL`), `aluminum usage [--days N] [--json]`
-lists requests, failures, input/output/cache tokens and USD spend per model, using the
-same gateway key as `models`. Spend reflects the configured rates only.
+Usage needs the LiteLLM database (set `DATABASE_URL`, e.g. a local Postgres) and the
+gateway key (`LITELLM_MASTER_KEY` or `ALUM_GATEWAY_API_KEY`) in your environment:
+
+```bash
+aluminum usage                 # all recorded requests
+aluminum usage --days 7        # last 7 days
+aluminum usage --json          # machine-readable
+```
+
+It lists, per model: requests, failures, input / output / cache read / cache write
+tokens, total tokens in millions, and USD spend computed from the configured rates
+(unpriced models show $0). Rows appear about a minute after the request.
 
 ### OpenTelemetry (opt-in)
 
