@@ -70,7 +70,7 @@ jobs:
         run: mkdocs build
 
   pull-request-title:
-    if: github.event_name == 'pull_request' && github.event.pull_request.user.login != 'dependabot[bot]'
+    if: github.event_name == 'pull_request' && github.event.pull_request.user.login != 'dependabot[bot]' && github.event.pull_request.user.login != 'Copilot'
     runs-on: ubuntu-latest
     steps:
       - name: Require a Conventional Commit title
