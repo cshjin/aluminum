@@ -32,7 +32,7 @@ dev = ["pytest>=8.0", "ruff>=0.17.0"]
 litellm = ["litellm[proxy]>=1.105.1,<2"]
 otel = [
   "aluminum[litellm]",
-  "opentelemetry-sdk>=1.33.1,<2",
+  "opentelemetry-sdk>=1.45.1,<2",
   "opentelemetry-exporter-otlp>=1.33.1,<2",
 ]
 
