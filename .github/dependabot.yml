@@ -2,13 +2,9 @@ version: 2
 updates:
   - package-ecosystem: pip
     directory: /
+    allow:
+      - dependency-name: llm-rosetta
     commit-message:
       prefix: "build(deps)"
-    schedule:
-      interval: weekly
-  - package-ecosystem: github-actions
-    directory: /
-    commit-message:
-      prefix: "ci(deps)"
     schedule:
       interval: weekly
