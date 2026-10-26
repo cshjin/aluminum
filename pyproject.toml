@@ -18,7 +18,7 @@ dependencies = [
   "platformdirs>=4.12.4",
   "rich>=13.0",
   "inquirerpy>=0.3.4",
-  "llm-rosetta[gateway]>=0.10",
+  "llm-rosetta[gateway]>=0.13.0",
 ]
 
 [project.optional-dependencies]
